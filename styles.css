@@ -98,7 +98,7 @@ code {
   box-shadow: 0 2px 12px rgba(8, 59, 54, .22);
 }
 .brand { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 0 0 auto; }
-.brand-logo { width: 36px; height: 36px; display: block; }
+.brand-logo { width: 36px; height: 36px; display: block; border-radius: 50%; object-fit: cover; }
 .brand-name { font-weight: 800; font-size: 21px; line-height: 1; color: var(--lemon); letter-spacing: .4px; }
 .brand-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--mint); line-height: 1.5; }
 
@@ -173,6 +173,8 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
 }
 .hero-sub { margin: 0; font-size: 13.5px; color: var(--ink-soft); max-width: 34ch; line-height: 1.55; }
 .hero-logo {
+  border-radius: 18px;
+  object-fit: cover;
   flex: 0 0 auto;
   width: clamp(72px, 17vw, 118px);
   height: auto;
@@ -671,7 +673,7 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
 }
 .toast.is-shown { opacity: 1; transform: translate(-50%, 0); }
 
-/* ================= STRUK 58mm — desain baru ================= */
+/* ================= STRUK 58mm â€” desain baru ================= */
 .print-area { display: none; }
 
 .receipt {

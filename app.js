@@ -1,4 +1,4 @@
-/* MoodA — Kasir kafe. HTML murni + localStorage, siap PWA/APK. */
+/* MoodA â€” Kasir kafe. HTML murni + localStorage, siap PWA/APK. */
 (() => {
   'use strict';
 
@@ -31,7 +31,7 @@
 
   const DEFAULT_SETTINGS = {
     receiptName: 'MoodA',
-    receiptTagline: 'Es Teh · Milk Tea · Takoyaki',
+    receiptTagline: 'Es Teh - Milk Tea - Cemilan',
     receiptFooter: 'Terima kasih sudah mampir!',
     autoPrint: false,
     useBridge: false,
@@ -269,7 +269,7 @@
     if (!line.ice) return '';
     const ice = ICE_OPTIONS.find(o => o.id === line.ice)?.label || '';
     const sugar = SUGAR_OPTIONS.find(o => o.id === line.sugar)?.label || '';
-    return `${ice} · ${sugar}`;
+    return `${ice} Â· ${sugar}`;
   }
 
   function addToCart(item) {
@@ -339,7 +339,7 @@
       }
 
       const qty = el('div', 'qty');
-      const minus = el('button', null, '−');
+      const minus = el('button', null, 'âˆ’');
       minus.type = 'button';
       minus.setAttribute('aria-label', `Kurangi ${item.name}`);
       minus.addEventListener('click', () => {
@@ -440,7 +440,7 @@
   });
 
   function payLabel(method) {
-    if (method === 'E-Wallet') return 'E-Wallet · ' + ($('#pay-wallet').value || 'GoPay');
+    if (method === 'E-Wallet') return 'E-Wallet Â· ' + ($('#pay-wallet').value || 'GoPay');
     return method;
   }
 
@@ -491,7 +491,7 @@
     cart = [];
     renderCart();
     closePay();
-    toast('Tersimpan · ' + rupiah(order.total));
+    toast('Tersimpan Â· ' + rupiah(order.total));
     if ($('#view-rekap').classList.contains('is-active')) renderRekap();
 
     if (state.settings.autoPrint) await printOrder(order);
@@ -527,10 +527,10 @@
 
     const rule = (mark) => {
       const r = el('div', 'r-rule');
-      r.append(el('span', null, mark || '•'));
+      r.append(el('span', null, mark || 'â€¢'));
       return r;
     };
-    box.append(rule('•'));
+    box.append(rule('â€¢'));
 
     // nomor besar
     box.append(el('div', 'r-nomor', meta.nomor));
@@ -547,14 +547,14 @@
     if (order.customer) metaBox.append(metaRow('Atas nama', order.customer));
     box.append(metaBox);
 
-    box.append(rule('•'));
+    box.append(rule('â€¢'));
 
     // item
     const items = el('div', 'r-items');
     order.lines.forEach(l => {
       const row = el('div', 'r-item');
       const nameRow = el('div', 'r-item-name');
-      nameRow.append(el('span', null, `${l.qty}× ${l.name}`));
+      nameRow.append(el('span', null, `${l.qty}Ã— ${l.name}`));
       nameRow.append(el('span', null, rupiah(l.subtotal)));
       row.append(nameRow);
       if (l.variant) row.append(el('div', 'r-item-note', l.variant));
@@ -562,7 +562,7 @@
     });
     box.append(items);
 
-    box.append(rule('•'));
+    box.append(rule('â€¢'));
 
     // ringkasan
     const sum = el('div', 'r-sum');
@@ -679,7 +679,7 @@
       return k + ' '.repeat(space) + v;
     };
     // Nama panjang dipotong agar tidak melewati lebar kertas (thermal tidak auto-wrap rapi).
-    const trunc = (txt, max) => (txt.length <= max ? txt : txt.slice(0, Math.max(1, max - 1)).trimEnd() + '…');
+    const trunc = (txt, max) => (txt.length <= max ? txt : txt.slice(0, Math.max(1, max - 1)).trimEnd() + 'â€¦');
     const meta = receiptMeta(order);
     const out = [];
     out.push(trunc((s.receiptName || 'MoodA').toUpperCase(), cols));
@@ -808,12 +808,12 @@
   async function scanBridge() {
     const st = $('#bridge-status');
     st.className = 'status-line';
-    st.textContent = 'Menghubungi bridge…';
+    st.textContent = 'Menghubungi bridgeâ€¦';
     try {
       const info = await bridgeHealth();
       st.className = 'status-line is-ok';
       st.textContent = info.printerIp
-        ? `Bridge OK · printer terdeteksi: ${info.printerIp}`
+        ? `Bridge OK Â· printer terdeteksi: ${info.printerIp}`
         : 'Bridge aktif, printer belum diketahui';
       if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
     } catch (err) {
@@ -827,7 +827,7 @@
   async function testBridge() {
     const st = $('#bridge-status');
     st.className = 'status-line';
-    st.textContent = 'Menguji koneksi printer…';
+    st.textContent = 'Menguji koneksi printerâ€¦';
     const ip = $('#printer-ip').value.trim();
     try {
       const base = ($('#bridge-url').value.trim() || 'http://127.0.0.1:9110').replace(/\/$/, '');
@@ -842,7 +842,7 @@
       st.className = 'status-line is-ok';
       if (data.printerIp) {
         $('#printer-ip').value = data.printerIp;
-        st.textContent = `Terhubung ke printer ${data.printerIp} · port ${data.port || 9100}`;
+        st.textContent = `Terhubung ke printer ${data.printerIp} Â· port ${data.port || 9100}`;
       } else {
         st.textContent = 'Bridge aktif. Isi IP printer kalau pencarian otomatis tidak menemukan.';
       }
@@ -875,7 +875,7 @@
     if (period === 'minggu') {
       const end = new Date(start); end.setDate(end.getDate() + 6);
       const fmt = (d) => `${d.getDate()} ${bulan[d.getMonth()].slice(0, 3)}`;
-      return `${fmt(start)} – ${fmt(end)} ${end.getFullYear()}`;
+      return `${fmt(start)} â€“ ${fmt(end)} ${end.getFullYear()}`;
     }
     return `${bulan[start.getMonth()]} ${start.getFullYear()}`;
   }
@@ -935,12 +935,12 @@
         const card = el('div', 'trx');
         const head = el('div', 'trx-top');
         head.append(el('div', 'trx-id',
-          `${o.id.replace('TRX-', '#')} · ${new Date(o.at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`));
+          `${o.id.replace('TRX-', '#')} Â· ${new Date(o.at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`));
         head.append(el('div', 'trx-total money', rupiah(o.total)));
         card.append(head);
 
         card.append(el('div', 'trx-lines',
-          o.lines.map(l => `${l.qty}× ${l.name}${l.variant ? ' · ' + l.variant : ''}`).join(' • ')));
+          o.lines.map(l => `${l.qty}Ã— ${l.name}${l.variant ? ' Â· ' + l.variant : ''}`).join(' â€¢ ')));
 
         const tags = el('div', 'trx-tags');
         tags.append(el('span', 'trx-tag method', o.methodLabel || o.method));
@@ -1095,7 +1095,7 @@
     lines: [
       { name: 'Wonton Mini', qty: 1, price: 15000, subtotal: 15000, variant: '' },
       { name: 'Nasi Ayam Selimut', qty: 1, price: 12000, subtotal: 12000, variant: '' },
-      { name: 'Signature Chocolate MoodA', qty: 1, price: 8000, subtotal: 8000, variant: 'Less ice · No sugar' }
+      { name: 'Signature Chocolate MoodA', qty: 1, price: 8000, subtotal: 8000, variant: 'Less ice Â· No sugar' }
     ]
   });
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build-single.js — gabungkan MoodA jadi SATU file HTML mandiri.
+ * build-single.js â€” gabungkan MoodA jadi SATU file HTML mandiri.
  *
  * Semua CSS, JS, ikon, dan font ditanam (base64 / inline) sehingga file
  * bisa dikirim lewat WhatsApp dan dibuka tanpa folder pendamping.
@@ -31,9 +31,9 @@ function main() {
     .replace(/url\('fonts\/Baloo2-ExtraBold\.ttf'\)/g, `url('${b64('fonts/Baloo2-ExtraBold.ttf', 'font/ttf')}')`)
     .replace(/url\('fonts\/Baloo2-Bold\.ttf'\)/g, `url('${b64('fonts/Baloo2-Bold.ttf', 'font/ttf')}')`);
 
-  // 2. Logo SVG brand -> data URI (dipakai di header)
-  const logoSvg = b64('logo-icon.svg', 'image/svg+xml');
-  cssInlined = cssInlined.replace(/url\('logo-icon\.svg'\)/g, `url('${logoSvg}')`);
+  // 2. Logo brand (foto) -> data URI
+  const brandPng = b64('icons/brand-256.png', 'image/png');
+  const heroPng = b64('icons/brand-512.png', 'image/png');
 
   // 3. Ikon PNG untuk struk -> data URI
   const iconPng = b64('icons/icon-192.png', 'image/png');
@@ -58,8 +58,8 @@ function main() {
 
   // 7. ikon apple-touch + favicon -> data URI
   html = html.replace(
-    /<link rel="icon" href="logo-icon\.svg" type="image\/svg\+xml">/,
-    `<link rel="icon" href="${logoSvg}" type="image/svg+xml">`
+    /<link rel="icon" href="icons\/icon-192\.png" type="image\/png">/,
+    `<link rel="icon" href="${iconPng}" type="image/png">`
   );
   html = html.replace(
     /<link rel="apple-touch-icon" href="icons\/icon-192\.png">/,
@@ -67,8 +67,8 @@ function main() {
   );
 
   // 8. Gambar hero + logo brand di markup
-  html = html.replace(/<img src="logo-icon\.svg"/g, `<img src="${logoSvg}"`);
-  html = html.replace(/<img src="icons\/primary\.png"/g, `<img src="${b64('icons/primary.png', 'image/png')}"`);
+  html = html.replace(/<img src="icons\/brand-256\.png"/g, `<img src="${brandPng}"`);
+  html = html.replace(/<img src="icons\/brand-512\.png"/g, `<img src="${heroPng}"`);
 
   // 9. app.js memakai 'icons/icon-192.png' untuk logo struk -> data URI
   html = html.replace(
@@ -76,7 +76,7 @@ function main() {
     `logo.src = ${JSON.stringify(iconPng)};`
   );
 
-  // 10. Service worker tidak berlaku di file:// — hapus registrasinya
+  // 10. Service worker tidak berlaku di file:// â€” hapus registrasinya
   html = html.replace(
     /<script>\s*if \('serviceWorker' in navigator[\s\S]*?<\/script>/,
     '<!-- service worker tidak dipakai pada versi satu-file -->'
