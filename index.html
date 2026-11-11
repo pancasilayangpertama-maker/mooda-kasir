@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F5C55">
+<meta name="description" content="MoodA — kasir kafe. Catat pesanan, cetak struk, lihat rekap harian.">
+<title>MoodA — Kasir</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="logo-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MoodA">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="appbar">
+  <div class="brand">
+    <img src="logo-icon.svg" alt="" class="brand-logo">
+    <div>
+      <div class="brand-name">MoodA</div>
+      <div class="brand-sub">Kasir Kafe</div>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Navigasi utama">
+    <button class="tab is-active" role="tab" aria-selected="true" data-view="kasir">Kasir</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="rekap">Rekap</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="harga">Harga</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="printer">Printer</button>
+  </nav>
+</header>
+
+<main class="layout">
+
+  <!-- ============ KASIR ============ -->
+  <section id="view-kasir" class="view is-active" aria-label="Kasir">
+
+    <div class="hero">
+      <div class="hero-text">
+        <p class="hero-kicker">Selamat datang</p>
+        <h1 class="hero-title">Pesan sekarang,<br>siap dalam sekejap.</h1>
+        <p class="hero-sub">Takoyaki, wonton mini, nasi ayam selimut, dan minuman dingin favorit.</p>
+      </div>
+      <img src="icons/primary.png" alt="MoodA" class="hero-logo">
+    </div>
+
+    <div class="menu-pane">
+      <div class="menu-head">
+        <h2 class="menu-title">Menu</h2>
+        <div class="chips" role="group" aria-label="Filter kategori">
+          <button class="chip is-active" data-cat="all">Semua</button>
+          <button class="chip" data-cat="makanan">Makanan</button>
+          <button class="chip" data-cat="minuman">Minuman</button>
+        </div>
+      </div>
+      <div id="menu-grid" class="menu-grid"></div>
+    </div>
+
+    <aside class="cart-pane" aria-label="Keranjang pesanan">
+      <div class="cart-head">
+        <div>
+          <h2>Pesanan</h2>
+          <div id="cart-count" class="cart-count">Kosong</div>
+        </div>
+        <button id="btn-clear-cart" class="btn-ghost btn-sm" type="button">Kosongkan</button>
+      </div>
+      <div id="cart-list" class="cart-list"></div>
+      <div class="cart-foot">
+        <div class="total-row">
+          <span>Total</span>
+          <strong id="cart-total" class="money">Rp0</strong>
+        </div>
+        <button id="btn-checkout" class="btn-primary" type="button">Bayar</button>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ REKAP ============ -->
+  <section id="view-rekap" class="view" aria-label="Rekap pesanan">
+    <div class="rekap-head">
+      <h1>Rekap Pesanan</h1>
+      <div class="chips" role="group" aria-label="Periode rekap">
+        <button class="chip is-active" data-period="hari">Hari</button>
+        <button class="chip" data-period="minggu">Minggu</button>
+        <button class="chip" data-period="bulan">Bulan</button>
+      </div>
+    </div>
+
+    <div class="period-nav">
+      <button id="btn-prev" class="btn-ghost btn-icon" type="button" aria-label="Periode sebelumnya">&#8592;</button>
+      <div id="period-label" class="period-label">—</div>
+      <button id="btn-next" class="btn-ghost btn-icon" type="button" aria-label="Periode berikutnya">&#8594;</button>
+      <button id="btn-today" class="btn-ghost btn-sm" type="button">Hari ini</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Omzet</span><strong id="stat-omzet" class="money">Rp0</strong></div>
+      <div class="stat"><span class="stat-label">Transaksi</span><strong id="stat-trx">0</strong></div>
+      <div class="stat"><span class="stat-label">Item terjual</span><strong id="stat-item">0</strong></div>
+      <div class="stat"><span class="stat-label">Rata-rata / transaksi</span><strong id="stat-avg" class="money">Rp0</strong></div>
+    </div>
+
+    <h2 class="section-title">Menu terlaris</h2>
+    <div id="top-items" class="top-items"></div>
+
+    <h2 class="section-title">Riwayat transaksi</h2>
+    <div id="history" class="history"></div>
+
+    <div class="rekap-actions">
+      <button id="btn-export-csv" class="btn-ghost" type="button">Ekspor CSV periode ini</button>
+      <button id="btn-backup" class="btn-ghost" type="button">Backup data (JSON)</button>
+      <label class="btn-ghost file-label">
+        Pulihkan backup
+        <input id="input-restore" type="file" accept="application/json" hidden>
+      </label>
+    </div>
+  </section>
+
+  <!-- ============ HARGA ============ -->
+  <section id="view-harga" class="view" aria-label="Pengaturan harga">
+    <h1>Harga Menu</h1>
+    <p class="hint">Ubah harga lalu simpan. Perubahan langsung dipakai di kasir. Harga pada transaksi yang sudah tercatat tidak berubah.</p>
+    <div id="price-editor" class="price-editor"></div>
+    <div class="rekap-actions">
+      <button id="btn-save-prices" class="btn-primary btn-inline" type="button">Simpan harga</button>
+      <button id="btn-reset-prices" class="btn-ghost" type="button">Kembalikan harga awal</button>
+    </div>
+    <div id="save-note" class="save-note" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- ============ PRINTER ============ -->
+  <section id="view-printer" class="view" aria-label="Pengaturan printer">
+    <h1>Printer Struk</h1>
+    <p class="hint">Printer thermal 58&nbsp;mm. Pilih metode yang sesuai alat di kafe.</p>
+
+    <div class="card-block">
+      <h2 class="card-title">Metode 1 · Cetak lewat sistem <span class="tag-ok">paling mudah</span></h2>
+      <p class="card-text">
+        Pasang printer WiFi di perangkat ini lebih dulu (Windows: <em>Settings → Bluetooth &amp; devices → Printers &amp; scanners</em>; Android: aplikasi printer mereknya; iPhone: <em>AirPrint</em>). Setelah itu MoodA mencetak lewat dialog cetak dengan kertas 58&nbsp;mm.
+      </p>
+      <div class="row-inline">
+        <button id="btn-print-test" class="btn-ghost" type="button">Cetak struk uji</button>
+        <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
+      </div>
+    </div>
+
+    <div class="card-block">
+      <h2 class="card-title">Metode 2 · Kirim langsung via WiFi (ESC/POS)</h2>
+      <p class="card-text">
+        Mengirim struk mentah ke printer di jaringan yang sama (port 9100). Browser dan aplikasi mobile tidak bisa membuka koneksi TCP, jadi perlu <strong>bridge</strong> kecil di komputer yang satu WiFi dengan printer.
+      </p>
+      <div class="bridge-steps">
+        <div class="step"><span class="step-n">1</span> Jalankan <code>node bridge.js</code> di komputer itu (biarkan jendelanya terbuka).</div>
+        <div class="step"><span class="step-n">2</span> Bridge mencari printer otomatis, atau isi IP printer di bawah.</div>
+        <div class="step"><span class="step-n">3</span> Klik <em>Tes koneksi</em>. Kalau hijau, cetak langsung tanpa dialog.</div>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Alamat bridge</span>
+        <input id="bridge-url" type="text" placeholder="http://127.0.0.1:9110">
+      </label>
+
+      <label class="field">
+        <span class="field-label">IP printer <em>(opsional, temukan otomatis)</em></span>
+        <input id="printer-ip" type="text" placeholder="192.168.1.50">
+      </label>
+
+      <label class="field">
+        <span class="field-label">Lebar kertas</span>
+        <select id="paper-width">
+          <option value="58">58 mm — 32 karakter</option>
+          <option value="80">80 mm — 48 karakter</option>
+        </select>
+      </label>
+
+      <div class="row-inline">
+        <button id="btn-bridge-scan" class="btn-ghost" type="button">Cari printer</button>
+        <button id="btn-bridge-test" class="btn-primary btn-inline" type="button">Tes koneksi</button>
+      </div>
+      <div id="bridge-status" class="status-line" role="status" aria-live="polite">Bridge belum dicek.</div>
+    </div>
+
+    <div class="card-block">
+      <h2 class="card-title">Struk</h2>
+      <label class="field">
+        <span class="field-label">Nama di struk</span>
+        <input id="receipt-name" type="text" maxlength="32" placeholder="MoodA">
+      </label>
+      <label class="field">
+        <span class="field-label">Alamat / catatan kaki</span>
+        <input id="receipt-footer" type="text" maxlength="64" placeholder="Terima kasih sudah mampir!">
+      </label>
+      <label class="check">
+        <input id="auto-print" type="checkbox">
+        <span>Cetak struk otomatis setelah pembayaran</span>
+      </label>
+      <label class="check">
+        <input id="use-bridge" type="checkbox">
+        <span>Pakai bridge WiFi (lewati dialog cetak)</span>
+      </label>
+      <div class="row-inline">
+        <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
+      </div>
+      <div id="printer-note" class="save-note" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ MODAL BAYAR ============ -->
+<div id="modal-pay" class="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pay-title">
+    <h2 id="pay-title">Pembayaran</h2>
+    <div class="pay-total">
+      <span>Total tagihan</span>
+      <strong id="pay-total" class="money">Rp0</strong>
+    </div>
+
+    <fieldset class="pay-methods">
+      <legend class="field-label">Metode pembayaran</legend>
+      <div class="method-grid" role="radiogroup" aria-label="Metode pembayaran">
+        <button type="button" class="method" data-method="Cash" role="radio" aria-checked="true">
+          <span class="method-name">Cash</span>
+          <span class="method-note">Uang tunai</span>
+        </button>
+        <button type="button" class="method" data-method="QRIS" role="radio" aria-checked="false">
+          <span class="method-name">QRIS</span>
+          <span class="method-note">Scan QR</span>
+        </button>
+        <button type="button" class="method" data-method="E-Wallet" role="radio" aria-checked="false">
+          <span class="method-name">E-Wallet</span>
+          <span class="method-note">GoPay · OVO · DANA</span>
+        </button>
+        <button type="button" class="method" data-method="Transfer" role="radio" aria-checked="false">
+          <span class="method-name">Transfer</span>
+          <span class="method-note">Bank</span>
+        </button>
+      </div>
+    </fieldset>
+
+    <label class="field" id="field-wallet" hidden>
+      <span class="field-label">Jenis e-wallet</span>
+      <select id="pay-wallet">
+        <option value="GoPay">GoPay</option>
+        <option value="OVO">OVO</option>
+        <option value="DANA">DANA</option>
+        <option value="ShopeePay">ShopeePay</option>
+      </select>
+    </label>
+
+    <label class="field" id="field-paid">
+      <span class="field-label">Uang diterima</span>
+      <input id="pay-received" type="number" inputmode="numeric" min="0" step="500" placeholder="0">
+    </label>
+
+    <div class="quick-cash" id="quick-cash" role="group" aria-label="Uang cepat">
+      <button type="button" data-cash="exact">Pas</button>
+      <button type="button" data-cash="20000">20rb</button>
+      <button type="button" data-cash="50000">50rb</button>
+      <button type="button" data-cash="100000">100rb</button>
+    </div>
+
+    <div class="change-row" id="change-row" hidden>
+      <span>Kembalian</span>
+      <strong id="pay-change" class="money">Rp0</strong>
+    </div>
+
+    <label class="field">
+      <span class="field-label">Atas nama <em>(opsional)</em></span>
+      <input id="pay-name" type="text" maxlength="24" placeholder="cth. Dims">
+    </label>
+
+    <div class="modal-actions">
+      <button id="btn-pay-cancel" class="btn-ghost" type="button">Batal</button>
+      <button id="btn-pay-confirm" class="btn-primary" type="button">Simpan &amp; cetak</button>
+    </div>
+    <p id="pay-error" class="error" role="alert"></p>
+  </div>
+</div>
+
+<!-- ============ AREA CETAK 58mm ============ -->
+<div id="print-area" class="print-area" aria-hidden="true"></div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "MoodA — Kasir Kafe",
+  "short_name": "MoodA",
+  "description": "Kasir kafe MoodA: catat pesanan, cetak struk thermal, rekap harian.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#FCF8F2",
+  "theme_color": "#0F5C55",
+  "categories": ["business", "productivity", "food"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "logo-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Kasir", "url": "./index.html", "short_name": "Kasir" },
+    { "name": "Rekap", "url": "./index.html#rekap", "short_name": "Rekap" }
+  ]
+}

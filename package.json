@@ -1,0 +1,15 @@
+﻿{
+  "name": "mooda-kasir",
+  "version": "3.0.0",
+  "private": true,
+  "description": "MoodA - aplikasi kasir kafe (web, PWA, siap Capacitor)",
+  "scripts": {
+    "start": "npx serve .",
+    "bridge": "node bridge.js",
+    "test": "node _test_cdp.js",
+    "cap:init": "npx cap init MoodA com.mooda.kasir --web-dir=.",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync"
+  }
+}
