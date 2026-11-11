@@ -2,6 +2,16 @@
 
 Aplikasi kasir untuk kafe MoodA. HTML + CSS + JavaScript murni, tanpa framework, tanpa build step. Data tersimpan di perangkat (localStorage).
 
+## 0. Pasang di iPhone / Android / Windows (paling cepat)
+
+**Buka: https://pancasilayangpertama-maker.github.io/mooda-kasir/**
+
+- **iPhone (Safari):** tombol Share → **Add to Home Screen**
+- **Android (Chrome):** menu ⋮ → **Add to Home screen** / **Install app**
+- **Windows (Chrome/Edge):** ikon install di address bar, atau ⋮ → **Install MoodA**
+
+Ikon MoodA akan muncul di home screen, terbuka tanpa address bar, dan tetap jalan offline setelah sekali dibuka.
+
 ## 1. Menjalankan
 
 **Langsung:** buka `index.html` di Chrome/Edge/Safari. Selesai.
