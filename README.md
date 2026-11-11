@@ -4,13 +4,31 @@ Aplikasi kasir untuk kafe MoodA. HTML + CSS + JavaScript murni, tanpa framework,
 
 ## 0. Pasang di iPhone / Android / Windows (paling cepat)
 
+**Opsi A · satu file lewat WhatsApp** (tanpa install, tanpa akun apa pun)
+
+File: `dist/MoodA-Single.html` (1,3 MB). Semua CSS, JS, ikon, dan font sudah ditanam di dalamnya — cukup kirim satu file itu sebagai dokumen WhatsApp.
+
+- **Android:** download file → ketuk → **buka dengan Chrome**. Jalan penuh, data tersimpan.
+- **Windows:** download → klik dua kali → terbuka di browser default.
+- **iPhone:** download → ketuk → **Bagikan → Safari** (atau buka lewat aplikasi Files). Tampil sebagai halaman, bukan ikon aplikasi; penyimpanan data di iOS untuk file lokal bisa terbatas.
+
+Buat ulang file setelah aplikasi diubah:
+
+```bash
+node build-single.js      # hasil: dist/MoodA-Single.html
+```
+
+**Opsi B · URL langsung** (paling nyaman untuk iPhone)
+
 **Buka: https://pancasilayangpertama-maker.github.io/mooda-kasir/**
 
 - **iPhone (Safari):** tombol Share → **Add to Home Screen**
 - **Android (Chrome):** menu ⋮ → **Add to Home screen** / **Install app**
 - **Windows (Chrome/Edge):** ikon install di address bar, atau ⋮ → **Install MoodA**
 
-Ikon MoodA akan muncul di home screen, terbuka tanpa address bar, dan tetap jalan offline setelah sekali dibuka.
+Ikon MoodA muncul di home screen, terbuka tanpa address bar, dan tetap jalan offline setelah sekali dibuka.
+
+**Kenapa tidak ada APK?** File `.apk` hanya bisa dipasang di Android, dan membuatnya butuh JDK + Android SDK (sekitar 4 GB). Untuk iPhone, iOS menolak memasang aplikasi dari file yang dikirim lewat WhatsApp — hanya lewat App Store / TestFlight, yang butuh Apple Developer Program ($99/tahun).
 
 ## 1. Menjalankan
 
