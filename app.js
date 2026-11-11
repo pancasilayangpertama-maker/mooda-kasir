@@ -144,6 +144,9 @@
       if (bridgeBlock) bridgeBlock.hidden = false;
       if (checkBridge) checkBridge.hidden = false;
     }
+
+    const btBlock = $('#block-bluetooth');
+    if (btBlock) btBlock.hidden = !isMobile;
   }
 
   // ---------- Toast ----------
@@ -664,6 +667,113 @@
     if (found) { found.printed = true; save(); }
   }
 
+  // ---------- Bagikan / salin struk (jalur printer Bluetooth) ----------
+  // Halaman web tidak bisa menembak printer Bluetooth; aplikasi printer merek
+  // (Kimipos/Dooke/ALGOO/VS/RawBT) yang bisa. Jadi struk dikirim sebagai teks.
+  function escposText(order) {
+    const s = state.settings;
+    const cols = Number(s.paperWidth) === 80 ? 44 : 30; // 58mm praktisnya ~30-32 kolom
+    const line = () => '-'.repeat(cols);
+    const kv = (k, v) => {
+      const space = Math.max(1, cols - k.length - v.length);
+      return k + ' '.repeat(space) + v;
+    };
+    // Nama panjang dipotong agar tidak melewati lebar kertas (thermal tidak auto-wrap rapi).
+    const trunc = (txt, max) => (txt.length <= max ? txt : txt.slice(0, Math.max(1, max - 1)).trimEnd() + '…');
+    const meta = receiptMeta(order);
+    const out = [];
+    out.push(trunc((s.receiptName || 'MoodA').toUpperCase(), cols));
+    if (s.receiptTagline) out.push(trunc(s.receiptTagline, cols));
+    out.push(line());
+    out.push(kv('No', meta.nomor));
+    out.push(kv(meta.tanggal, meta.jam));
+    if (order.customer) out.push(kv('Nama', trunc(order.customer, cols - 6)));
+    out.push(line());
+    order.lines.forEach(l => {
+      const price = rupiah(l.subtotal);
+      const qtyPrefix = `${l.qty}x `;
+      const nameRoom = cols - qtyPrefix.length - price.length - 1;
+      out.push(kv(qtyPrefix + trunc(l.name, Math.max(6, nameRoom)), price));
+      if (l.variant) out.push(trunc('   ' + l.variant, cols));
+    });
+    out.push(line());
+    const itemCount = order.lines.reduce((n, l) => n + l.qty, 0);
+    out.push(kv(`${itemCount} item`, rupiah(order.total)));
+    out.push(kv('TOTAL', rupiah(order.total)));
+    if (order.method === 'Cash') {
+      out.push(kv('Tunai', rupiah(order.received)));
+      out.push(kv('Kembali', rupiah(order.change)));
+    }
+    out.push(trunc('Bayar: ' + (order.methodLabel || order.method), cols));
+    out.push(line());
+    out.push('Terima kasih!');
+    if (s.receiptFooter) out.push(trunc(s.receiptFooter, cols));
+    return out.join('\n');
+  }
+
+  function setShareStatus(msg, tone) {
+    const box = $('#share-status');
+    if (!box) return;
+    box.className = 'status-line' + (tone ? ' is-' + tone : '');
+    box.textContent = msg;
+  }
+
+  // Bagian terakhir struk teks untuk aplikasi printer (dipakai tombol salin/uji).
+  function receiptTextTail(order) {
+    return escposText(order).slice(-600);
+  }
+
+  async function shareReceipt(order) {
+    const text = escposText(order);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Struk ' + order.id.replace('TRX-', '#'), text });
+        setShareStatus('Struk dibagikan. Pilih aplikasi printer di daftar aplikasi.', 'ok');
+        return;
+      } catch (err) {
+        if (err && err.name === 'AbortError') { setShareStatus('Dibatalkan.', ''); return; }
+      }
+    }
+    const ok = await copyReceipt(order, true);
+    setShareStatus(ok
+      ? 'Perangkat ini tidak punya menu bagikan, struk sudah disalin. Tempel di aplikasi printer.'
+      : 'Tidak bisa membagikan maupun menyalin. Pakai tombol Unduh struk (.txt).', ok ? 'ok' : 'err');
+  }
+
+  async function copyReceipt(order, silent) {
+    const text = escposText(order);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        if (!silent) setShareStatus('Struk disalin. Tempel di aplikasi printer.', 'ok');
+        return true;
+      }
+    } catch (err) { /* jatuh ke cara manual */ }
+
+    // fallback untuk file:// atau browser tanpa clipboard API
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-1000px;left:-1000px;opacity:0;';
+      document.body.append(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      ta.remove();
+      if (!silent) setShareStatus(ok ? 'Struk disalin. Tempel di aplikasi printer.' : 'Gagal menyalin.', ok ? 'ok' : 'err');
+      return ok;
+    } catch (err) {
+      if (!silent) setShareStatus('Gagal menyalin struk.', 'err');
+      return false;
+    }
+  }
+
+  function downloadReceipt(order) {
+    const text = escposText(order);
+    download(`struk-${order.id.replace('TRX-', '')}.txt`, text, 'text/plain;charset=utf-8');
+    setShareStatus('File struk diunduh. Buka di aplikasi printer lewat menu impor.', 'ok');
+  }
+
   // ---------- Bridge (ESC/POS via WiFi) ----------
   async function bridgeHealth() {
     const base = ($('#bridge-url')?.value || state.settings.bridgeUrl || '').replace(/\/$/, '');
@@ -837,6 +947,12 @@
         if (o.customer) tags.append(el('span', 'trx-tag', o.customer));
         if (o.method === 'Cash') tags.append(el('span', 'trx-tag', 'Kembali ' + rupiah(o.change)));
 
+        const shareBtn = el('button', 'trx-print', 'Bagikan');
+        shareBtn.type = 'button';
+        shareBtn.setAttribute('aria-label', `Bagikan struk ${o.id} ke aplikasi printer`);
+        shareBtn.addEventListener('click', () => shareReceipt(o));
+        tags.append(shareBtn);
+
         const printBtn = el('button', 'trx-print', 'Cetak');
         printBtn.type = 'button';
         printBtn.setAttribute('aria-label', `Cetak struk ${o.id}`);
@@ -967,22 +1083,28 @@
   $('#btn-bridge-scan').addEventListener('click', scanBridge);
   $('#btn-bridge-test').addEventListener('click', testBridge);
 
+  const SAMPLE_ORDER = () => ({
+    id: 'TRX-TEST',
+    at: new Date().toISOString(),
+    method: 'Cash',
+    methodLabel: 'Cash',
+    received: 50000,
+    change: 15000,
+    customer: 'Tes Printer',
+    total: 35000,
+    lines: [
+      { name: 'Wonton Mini', qty: 1, price: 15000, subtotal: 15000, variant: '' },
+      { name: 'Nasi Ayam Selimut', qty: 1, price: 12000, subtotal: 12000, variant: '' },
+      { name: 'Signature Chocolate MoodA', qty: 1, price: 8000, subtotal: 8000, variant: 'Less ice · No sugar' }
+    ]
+  });
+
+  $('#btn-share-test').addEventListener('click', () => shareReceipt(SAMPLE_ORDER()));
+  $('#btn-copy-test').addEventListener('click', () => copyReceipt(SAMPLE_ORDER()));
+  $('#btn-download-test').addEventListener('click', () => downloadReceipt(SAMPLE_ORDER()));
+
   $('#btn-print-test').addEventListener('click', () => {
-    printOrder({
-      id: 'TRX-TEST',
-      at: new Date().toISOString(),
-      method: 'Cash',
-      methodLabel: 'Cash',
-      received: 50000,
-      change: 15000,
-      customer: 'Tes Printer',
-      total: 35000,
-      lines: [
-        { name: 'Wonton Mini', qty: 1, price: 15000, subtotal: 15000, variant: '' },
-        { name: 'Nasi Ayam Selimut', qty: 1, price: 12000, subtotal: 12000, variant: '' },
-        { name: 'Signature Chocolate MoodA', qty: 1, price: 8000, subtotal: 8000, variant: 'Less ice · No sugar' }
-      ]
-    });
+    printOrder(SAMPLE_ORDER());
   });
 
   $('#btn-print-example').addEventListener('click', () => {

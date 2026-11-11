@@ -134,17 +134,36 @@
   <!-- ============ PRINTER ============ -->
   <section id="view-printer" class="view" aria-label="Pengaturan printer">
     <h1>Printer Struk</h1>
-    <p class="hint">Printer thermal 58&nbsp;mm. MoodA mencetak lewat dialog cetak bawaan perangkat.</p>
+    <p class="hint">Printer thermal 58&nbsp;mm. Pilih cara yang sesuai printer Bos Dims.</p>
+
+    <div class="card-block" id="block-bluetooth">
+      <h2 class="card-title">Printer Bluetooth (MP-58A1, VS, Dooke, Kimipos, ALGOO) <span class="tag-ok">untuk HP</span></h2>
+      <p class="card-text">
+        Halaman web <strong>tidak bisa</strong> mengirim langsung ke printer Bluetooth — Safari dan Chrome tidak punya akses ke jalur itu. Yang punya akses adalah <strong>aplikasi printer</strong> di HP. Jadi alurnya: MoodA menyiapkan teks struk, lalu dikirim ke aplikasi printer itu.
+      </p>
+      <div class="bridge-steps">
+        <div class="step"><span class="step-n">1</span> Pasang aplikasi printer sesuai merek: <em>Kimipos / Dooke / ALGOO / VS</em>, atau <strong>RawBT</strong> (Android) / <strong>Printer Thermal</strong> (iPhone).</div>
+        <div class="step"><span class="step-n">2</span> Nyalakan printer, sambungkan lewat <strong>Bluetooth</strong> di dalam aplikasi itu sampai statusnya tersambung.</div>
+        <div class="step"><span class="step-n">3</span> Di MoodA, tekan <strong>Bagikan struk</strong> lalu pilih aplikasi printer tersebut — atau <strong>Salin struk</strong> lalu tempel di aplikasi printer.</div>
+        <div class="step"><span class="step-n">4</span> Di aplikasi printer, pilih ukuran kertas 58&nbsp;mm lalu cetak.</div>
+      </div>
+      <div class="row-inline">
+        <button id="btn-share-test" class="btn-primary btn-inline" type="button">Bagikan struk uji</button>
+        <button id="btn-copy-test" class="btn-ghost" type="button">Salin struk uji</button>
+        <button id="btn-download-test" class="btn-ghost" type="button">Unduh struk (.txt)</button>
+      </div>
+      <div id="share-status" class="status-line" role="status" aria-live="polite">Belum ada yang dibagikan.</div>
+    </div>
 
     <div class="card-block" id="block-mobile">
-      <h2 class="card-title">Cetak dari HP <span class="tag-ok">aktif</span></h2>
+      <h2 class="card-title">Cetak lewat layar cetak perangkat <span class="tag-ok">cadangan</span></h2>
       <p class="card-text" id="mobile-help">
-        Printer harus sudah terpasang atau terdeteksi di HP ini. Cara mencetak:
+        Cocok kalau printer terdeteksi oleh layanan cetak bawaan perangkat (AirPrint di iPhone, atau printer jaringan di Android/Windows).
       </p>
       <div class="bridge-steps" id="mobile-steps">
         <div class="step"><span class="step-n">1</span> Tekan <strong>Cetak struk</strong> di bawah (atau setelah pembayaran).</div>
-        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan HP — pilih printer 58&nbsp;mm kamu.</div>
-        <div class="step"><span class="step-n">3</span> Kalau printer belum muncul: sambungkan printer ke WiFi yang sama, lalu pasang aplikasi printer mereknya (Xprinter / iDPRT / RawBT di Android) atau pastikan printer mendukung <em>AirPrint</em> (iPhone).</div>
+        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan perangkat — pilih printer 58&nbsp;mm kamu.</div>
+        <div class="step"><span class="step-n">3</span> Kalau printer tidak muncul, itu berarti layanan cetak perangkat tidak mendukung printer tersebut — pakai jalur Bluetooth di atas.</div>
         <div class="step"><span class="step-n">4</span> Di layar cetak, pilih ukuran kertas 58&nbsp;mm dan margin <em>None</em> agar struk tidak terpotong.</div>
       </div>
       <div class="row-inline">
@@ -152,7 +171,7 @@
         <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
       </div>
       <p class="card-text" style="margin:12px 0 0;font-size:13px;">
-        Belum punya printer thermal? Struk tetap bisa dibuka sebagai pratinjau, atau disimpan jadi PDF lewat pilihan <em>Save as PDF</em> di layar cetak.
+        Struk juga bisa disimpan jadi PDF lewat pilihan <em>Save as PDF</em> di layar cetak.
       </p>
     </div>
 
