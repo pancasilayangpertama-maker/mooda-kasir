@@ -960,26 +960,35 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   <!-- ============ PRINTER ============ -->
   <section id="view-printer" class="view" aria-label="Pengaturan printer">
     <h1>Printer Struk</h1>
-    <p class="hint">Printer thermal 58&nbsp;mm. Pilih metode yang sesuai alat di kafe.</p>
+    <p class="hint">Printer thermal 58&nbsp;mm. MoodA mencetak lewat dialog cetak bawaan perangkat.</p>
 
-    <div class="card-block">
-      <h2 class="card-title">Metode 1 · Cetak lewat sistem <span class="tag-ok">paling mudah</span></h2>
-      <p class="card-text">
-        Pasang printer WiFi di perangkat ini lebih dulu (Windows: <em>Settings → Bluetooth &amp; devices → Printers &amp; scanners</em>; Android: aplikasi printer mereknya; iPhone: <em>AirPrint</em>). Setelah itu MoodA mencetak lewat dialog cetak dengan kertas 58&nbsp;mm.
+    <div class="card-block" id="block-mobile">
+      <h2 class="card-title">Cetak dari HP <span class="tag-ok">aktif</span></h2>
+      <p class="card-text" id="mobile-help">
+        Printer harus sudah terpasang atau terdeteksi di HP ini. Cara mencetak:
       </p>
+      <div class="bridge-steps" id="mobile-steps">
+        <div class="step"><span class="step-n">1</span> Tekan <strong>Cetak struk</strong> di bawah (atau setelah pembayaran).</div>
+        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan HP — pilih printer 58&nbsp;mm kamu.</div>
+        <div class="step"><span class="step-n">3</span> Kalau printer belum muncul: sambungkan printer ke WiFi yang sama, lalu pasang aplikasi printer mereknya (Xprinter / iDPRT / RawBT di Android) atau pastikan printer mendukung <em>AirPrint</em> (iPhone).</div>
+        <div class="step"><span class="step-n">4</span> Di layar cetak, pilih ukuran kertas 58&nbsp;mm dan margin <em>None</em> agar struk tidak terpotong.</div>
+      </div>
       <div class="row-inline">
         <button id="btn-print-test" class="btn-ghost" type="button">Cetak struk uji</button>
         <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
       </div>
+      <p class="card-text" style="margin:12px 0 0;font-size:13px;">
+        Belum punya printer thermal? Struk tetap bisa dibuka sebagai pratinjau, atau disimpan jadi PDF lewat pilihan <em>Save as PDF</em> di layar cetak.
+      </p>
     </div>
 
-    <div class="card-block">
-      <h2 class="card-title">Metode 2 · Kirim langsung via WiFi (ESC/POS)</h2>
+    <div class="card-block" id="block-bridge">
+      <h2 class="card-title">Mode cetak langsung (opsional, khusus komputer)</h2>
       <p class="card-text">
-        Mengirim struk mentah ke printer di jaringan yang sama (port 9100). Browser dan aplikasi mobile tidak bisa membuka koneksi TCP, jadi perlu <strong>bridge</strong> kecil di komputer yang satu WiFi dengan printer.
+        Fitur ini hanya bisa dipakai kalau MoodA dibuka di <strong>komputer</strong> yang satu WiFi dengan printer, dan ada <strong>bridge</strong> kecil yang dijalankan di komputer itu. Di HP fitur ini tidak tersedia.
       </p>
       <div class="bridge-steps">
-        <div class="step"><span class="step-n">1</span> Jalankan <code>node bridge.js</code> di komputer itu (biarkan jendelanya terbuka).</div>
+        <div class="step"><span class="step-n">1</span> Di komputer: jalankan <code>node bridge.js</code>, biarkan jendelanya terbuka.</div>
         <div class="step"><span class="step-n">2</span> Bridge mencari printer otomatis, atau isi IP printer di bawah.</div>
         <div class="step"><span class="step-n">3</span> Klik <em>Tes koneksi</em>. Kalau hijau, cetak langsung tanpa dialog.</div>
       </div>
@@ -992,14 +1001,6 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
       <label class="field">
         <span class="field-label">IP printer <em>(opsional, temukan otomatis)</em></span>
         <input id="printer-ip" type="text" placeholder="192.168.1.50">
-      </label>
-
-      <label class="field">
-        <span class="field-label">Lebar kertas</span>
-        <select id="paper-width">
-          <option value="58">58 mm — 32 karakter</option>
-          <option value="80">80 mm — 48 karakter</option>
-        </select>
       </label>
 
       <div class="row-inline">
@@ -1023,9 +1024,16 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
         <input id="auto-print" type="checkbox">
         <span>Cetak struk otomatis setelah pembayaran</span>
       </label>
-      <label class="check">
+      <label class="field" id="field-paper">
+        <span class="field-label">Lebar kertas</span>
+        <select id="paper-width">
+          <option value="58">58 mm — 32 karakter</option>
+          <option value="80">80 mm — 48 karakter</option>
+        </select>
+      </label>
+      <label class="check" id="check-bridge">
         <input id="use-bridge" type="checkbox">
-        <span>Pakai bridge WiFi (lewati dialog cetak)</span>
+        <span>Pakai bridge WiFi (lewati dialog cetak) — hanya di komputer</span>
       </label>
       <div class="row-inline">
         <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
@@ -1220,6 +1228,45 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   }
 
   const priceOf = (id) => Number(state.prices[id] ?? 0);
+
+  // ---------- Deteksi perangkat ----------
+  // Bridge ESC/POS hanya masuk akal di komputer yang menjalankan bridge.js.
+  const isMobile = (() => {
+    const ua = navigator.userAgent || '';
+    const touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(ua) || touchMac;
+  })();
+
+  function deviceKind() {
+    const ua = navigator.userAgent || '';
+    if (/iPhone|iPod/.test(ua)) return 'iphone';
+    if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ipad';
+    if (/Android/i.test(ua)) return 'android';
+    return 'desktop';
+  }
+
+  function applyDeviceUi() {
+    const kind = deviceKind();
+    const bridgeBlock = $('#block-bridge');
+    const checkBridge = $('#check-bridge');
+
+    if (isMobile) {
+      // Sembunyikan jalur bridge sepenuhnya di HP; jangan pernah menyuruh buka komputer.
+      if (bridgeBlock) bridgeBlock.hidden = true;
+      if (checkBridge) checkBridge.hidden = true;
+      state.settings.useBridge = false;
+
+      const help = $('#mobile-help');
+      if (help) {
+        help.textContent = kind === 'iphone' || kind === 'ipad'
+          ? 'iPhone/iPad mencetak lewat AirPrint. Printer thermal harus mendukung AirPrint, atau pakai aplikasi merek printer yang menyediakan tombol cetak.'
+          : 'Android mencetak lewat layanan cetak bawaan. Untuk printer thermal biasanya perlu aplikasi merek printer (Xprinter / iDPRT) atau RawBT yang menerima perintah cetak.';
+      }
+    } else {
+      if (bridgeBlock) bridgeBlock.hidden = false;
+      if (checkBridge) checkBridge.hidden = false;
+    }
+  }
 
   // ---------- Toast ----------
   let toastTimer = null;
@@ -1722,10 +1769,10 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   }
 
   async function printOrder(order) {
-    if (state.settings.useBridge) {
+    if (state.settings.useBridge && !isMobile) {
       const ok = await sendToBridge(order);
       if (ok) { markPrinted(order); return; }
-      toast('Bridge gagal, memakai dialog cetak');
+      toast('Cetak langsung gagal, memakai dialog cetak');
     }
     const area = $('#print-area');
     area.textContent = '';
@@ -1783,7 +1830,9 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
       if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
     } catch (err) {
       st.className = 'status-line is-err';
-      st.textContent = 'Bridge tidak terjangkau. Jalankan "node bridge.js" di komputer yang satu WiFi dengan printer.';
+      st.textContent = isMobile
+        ? 'Cetak langsung tidak tersedia di HP. Pakai dialog cetak bawaan perangkat.'
+        : 'Bridge tidak terjangkau. Di komputer ini, jalankan "node bridge.js" lalu coba lagi.';
     }
   }
 
@@ -2012,11 +2061,12 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
     $('#receipt-name').value = s.receiptName;
     $('#receipt-footer').value = s.receiptFooter;
     $('#auto-print').checked = !!s.autoPrint;
-    $('#use-bridge').checked = !!s.useBridge;
+    $('#use-bridge').checked = !!(s.useBridge && !isMobile);
     $('#bridge-url').value = s.bridgeUrl;
     $('#printer-ip').value = s.printerIp;
     $('#paper-width').value = s.paperWidth || '58';
     $('#printer-note').textContent = '';
+    applyDeviceUi();
   }
 
   $('#btn-save-printer').addEventListener('click', () => {
@@ -2025,7 +2075,7 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
       receiptName: $('#receipt-name').value.trim() || 'MoodA',
       receiptFooter: $('#receipt-footer').value.trim(),
       autoPrint: $('#auto-print').checked,
-      useBridge: $('#use-bridge').checked,
+      useBridge: isMobile ? false : $('#use-bridge').checked,
       bridgeUrl: $('#bridge-url').value.trim() || DEFAULT_SETTINGS.bridgeUrl,
       printerIp: $('#printer-ip').value.trim(),
       paperWidth: $('#paper-width').value
@@ -2121,6 +2171,7 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   });
 
   // ---------- Init ----------
+  applyDeviceUi();
   renderMenu();
   renderCart();
 })();

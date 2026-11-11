@@ -107,6 +107,45 @@
 
   const priceOf = (id) => Number(state.prices[id] ?? 0);
 
+  // ---------- Deteksi perangkat ----------
+  // Bridge ESC/POS hanya masuk akal di komputer yang menjalankan bridge.js.
+  const isMobile = (() => {
+    const ua = navigator.userAgent || '';
+    const touchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(ua) || touchMac;
+  })();
+
+  function deviceKind() {
+    const ua = navigator.userAgent || '';
+    if (/iPhone|iPod/.test(ua)) return 'iphone';
+    if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ipad';
+    if (/Android/i.test(ua)) return 'android';
+    return 'desktop';
+  }
+
+  function applyDeviceUi() {
+    const kind = deviceKind();
+    const bridgeBlock = $('#block-bridge');
+    const checkBridge = $('#check-bridge');
+
+    if (isMobile) {
+      // Sembunyikan jalur bridge sepenuhnya di HP; jangan pernah menyuruh buka komputer.
+      if (bridgeBlock) bridgeBlock.hidden = true;
+      if (checkBridge) checkBridge.hidden = true;
+      state.settings.useBridge = false;
+
+      const help = $('#mobile-help');
+      if (help) {
+        help.textContent = kind === 'iphone' || kind === 'ipad'
+          ? 'iPhone/iPad mencetak lewat AirPrint. Printer thermal harus mendukung AirPrint, atau pakai aplikasi merek printer yang menyediakan tombol cetak.'
+          : 'Android mencetak lewat layanan cetak bawaan. Untuk printer thermal biasanya perlu aplikasi merek printer (Xprinter / iDPRT) atau RawBT yang menerima perintah cetak.';
+      }
+    } else {
+      if (bridgeBlock) bridgeBlock.hidden = false;
+      if (checkBridge) checkBridge.hidden = false;
+    }
+  }
+
   // ---------- Toast ----------
   let toastTimer = null;
   function toast(msg) {
@@ -608,10 +647,10 @@
   }
 
   async function printOrder(order) {
-    if (state.settings.useBridge) {
+    if (state.settings.useBridge && !isMobile) {
       const ok = await sendToBridge(order);
       if (ok) { markPrinted(order); return; }
-      toast('Bridge gagal, memakai dialog cetak');
+      toast('Cetak langsung gagal, memakai dialog cetak');
     }
     const area = $('#print-area');
     area.textContent = '';
@@ -669,7 +708,9 @@
       if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
     } catch (err) {
       st.className = 'status-line is-err';
-      st.textContent = 'Bridge tidak terjangkau. Jalankan "node bridge.js" di komputer yang satu WiFi dengan printer.';
+      st.textContent = isMobile
+        ? 'Cetak langsung tidak tersedia di HP. Pakai dialog cetak bawaan perangkat.'
+        : 'Bridge tidak terjangkau. Di komputer ini, jalankan "node bridge.js" lalu coba lagi.';
     }
   }
 
@@ -898,11 +939,12 @@
     $('#receipt-name').value = s.receiptName;
     $('#receipt-footer').value = s.receiptFooter;
     $('#auto-print').checked = !!s.autoPrint;
-    $('#use-bridge').checked = !!s.useBridge;
+    $('#use-bridge').checked = !!(s.useBridge && !isMobile);
     $('#bridge-url').value = s.bridgeUrl;
     $('#printer-ip').value = s.printerIp;
     $('#paper-width').value = s.paperWidth || '58';
     $('#printer-note').textContent = '';
+    applyDeviceUi();
   }
 
   $('#btn-save-printer').addEventListener('click', () => {
@@ -911,7 +953,7 @@
       receiptName: $('#receipt-name').value.trim() || 'MoodA',
       receiptFooter: $('#receipt-footer').value.trim(),
       autoPrint: $('#auto-print').checked,
-      useBridge: $('#use-bridge').checked,
+      useBridge: isMobile ? false : $('#use-bridge').checked,
       bridgeUrl: $('#bridge-url').value.trim() || DEFAULT_SETTINGS.bridgeUrl,
       printerIp: $('#printer-ip').value.trim(),
       paperWidth: $('#paper-width').value
@@ -1007,6 +1049,7 @@
   });
 
   // ---------- Init ----------
+  applyDeviceUi();
   renderMenu();
   renderCart();
 })();
