@@ -72,8 +72,8 @@ jobs:
         run: |
           PKG=android/app/src/main/java/com/mooda/kasir
           mkdir -p "$PKG"
-          cp native/android/MoodaPrinterPlugin.java "$PKG/"
-          cp native/android/MainActivity.java "$PKG/"
+          cp native/plugin/MoodaPrinterPlugin.java "$PKG/"
+          cp native/plugin/MainActivity.java "$PKG/"
           python3 - <<'PY'
           import pathlib
           p = pathlib.Path("android/app/src/main/AndroidManifest.xml")
