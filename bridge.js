@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MoodA Bridge — kirim struk ke printer thermal 58mm lewat WiFi (ESC/POS, port 9100).
+ * MoodA Bridge - kirim struk ke printer thermal 58mm lewat WiFi (ESC/POS, port 9100).
  *
  * Browser tidak bisa membuka koneksi TCP mentah, jadi jembatan kecil ini
  * dijalankan di komputer yang SATU JARINGAN dengan printer.
@@ -107,7 +107,7 @@ async function discoverPrinter() {
 
   const prefixes = SUBNET ? [SUBNET] : localSubnets();
   for (const prefix of prefixes) {
-    log(`memindai ${prefix}.1-254 port ${PRINTER_PORT} …`);
+    log(`memindai ${prefix}.1-254 port ${PRINTER_PORT} ...`);
     const found = await scanSubnet(prefix);
     if (found) {
       cachedPrinterIp = found;
@@ -166,7 +166,7 @@ function sendToPrinter(ip, buffer) {
       });
     });
     socket.once('timeout', () => { socket.destroy(); reject(new Error(`timeout koneksi ke ${ip}:${PRINTER_PORT}`)); });
-    socket.once('error', (err) => reject(new Error(`gagal konek ${ip}:${PRINTER_PORT} — ${err.message}`)));
+    socket.once('error', (err) => reject(new Error(`gagal konek ${ip}:${PRINTER_PORT} - ${err.message}`)));
     socket.connect(PRINTER_PORT, ip);
   });
 }

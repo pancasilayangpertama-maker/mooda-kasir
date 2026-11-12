@@ -673,7 +673,7 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
 }
 .toast.is-shown { opacity: 1; transform: translate(-50%, 0); }
 
-/* ================= STRUK 58mm â€” desain baru ================= */
+/* ================= STRUK 58mm - desain baru ================= */
 .print-area { display: none; }
 
 .receipt {
@@ -855,3 +855,71 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   .img-row { grid-template-columns: 56px 1fr; }
   .img-actions { grid-column: 1 / -1; justify-content: flex-start; }
 }
+
+/* ---------------- Laporan PDF (A4) ---------------- */
+.report {
+  width: 190mm;
+  margin: 0 auto;
+  padding: 8mm 0;
+  background: #fff;
+  color: #111;
+  font-family: 'Baloo 2', 'Segoe UI', system-ui, sans-serif;
+  font-size: 11pt;
+}
+.rpt-head { border-bottom: 2px solid #111; padding-bottom: 3mm; margin-bottom: 4mm; }
+.rpt-brand { font-size: 20pt; font-weight: 800; letter-spacing: 1px; }
+.rpt-sub { font-size: 11pt; letter-spacing: 2px; text-transform: uppercase; opacity: .65; }
+.rpt-meta { display: grid; gap: 1mm; margin-bottom: 5mm; font-size: 10.5pt; }
+.rpt-meta-row { display: flex; justify-content: space-between; gap: 6mm; }
+.rpt-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin-bottom: 6mm; }
+.rpt-stat { border: 1px solid #bbb; border-radius: 3mm; padding: 3mm; }
+.rpt-stat-label { display: block; font-size: 8pt; letter-spacing: 1.4px; text-transform: uppercase; opacity: .65; }
+.rpt-stat strong { font-size: 13pt; }
+.rpt-h3 { font-size: 12pt; margin: 6mm 0 2mm; letter-spacing: .3px; }
+.rpt-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+.rpt-table th, .rpt-table td { border-bottom: 1px solid #ddd; padding: 1.8mm 2mm; text-align: left; vertical-align: top; }
+.rpt-table th { border-bottom: 1.5px solid #111; font-size: 8.5pt; letter-spacing: 1px; text-transform: uppercase; }
+.rpt-table .num { text-align: right; white-space: nowrap; }
+.rpt-table .items { font-size: 9pt; }
+.rpt-table tfoot td { border-top: 2px solid #111; border-bottom: none; font-weight: 800; font-size: 11pt; padding-top: 2.5mm; }
+.rpt-foot { display: flex; justify-content: space-between; gap: 8mm; margin-top: 10mm; font-size: 9pt; opacity: .7; }
+
+@media print {
+  body.printing-report > *:not(#print-area) { display: none !important; }
+  body.printing-report #print-area { display: block !important; }
+  body.printing-report .report { width: auto; padding: 0; }
+  body.printing-report .rpt-table tr { break-inside: avoid; }
+  body.printing-report .rpt-h3 { break-after: avoid; }
+}
+
+/* ---------------- Layar kunci PIN ---------------- */
+.lock {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(255, 214, 92, .22) 0%, rgba(255, 214, 92, 0) 55%),
+    linear-gradient(160deg, #0F5C55 0%, #093F3A 100%);
+}
+.lock-card {
+  width: min(360px, 100%);
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 22px 20px calc(20px + var(--safe-b));
+  box-shadow: 0 24px 60px rgba(4, 30, 28, .45);
+  text-align: center;
+}
+.lock-logo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+.lock-title { font-size: 22px; margin: 0 0 4px; letter-spacing: -.3px; }
+.lock-sub { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 16px; }
+.lock-card .field { text-align: left; }
+.lock-card input[type=password] {
+  letter-spacing: 6px;
+  font-size: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.lock-note { font-size: 11.5px; color: var(--ink-soft); margin: 14px 0 0; line-height: 1.5; }

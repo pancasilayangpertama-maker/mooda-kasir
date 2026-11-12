@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0F5C55">
-<meta name="description" content="MoodA â€” kasir kafe. Catat pesanan, cetak struk, lihat rekap harian.">
-<title>MoodA â€” Kasir</title>
+<meta name="description" content="MoodA - kasir kafe. Catat pesanan, cetak struk, lihat rekap harian.">
+<title>MoodA - Kasir</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -16,6 +16,40 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+<!-- ============ KUNCI KASIR (PIN lokal, tanpa API key) ============ -->
+<div id="lock-screen" class="lock" hidden>
+  <div class="lock-card">
+    <img src="icons/brand-256.png" alt="" class="lock-logo">
+    <h1 class="lock-title">MoodA Kasir</h1>
+    <p class="lock-sub" id="lock-sub">Masukkan PIN untuk membuka</p>
+
+    <div id="lock-setup" hidden>
+      <label class="field">
+        <span class="field-label">Buat PIN baru (4-6 angka)</span>
+        <input id="pin-new" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6" placeholder="______">
+      </label>
+      <label class="field">
+        <span class="field-label">Ulangi PIN</span>
+        <input id="pin-confirm" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6" placeholder="______">
+      </label>
+      <button id="btn-pin-create" class="btn-primary" type="button">Aktifkan PIN</button>
+    </div>
+
+    <div id="lock-entry" hidden>
+      <label class="field">
+        <span class="field-label">PIN</span>
+        <input id="pin-input" type="password" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="______">
+      </label>
+      <button id="btn-pin-unlock" class="btn-primary" type="button">Buka</button>
+    </div>
+
+    <p id="lock-error" class="error" role="alert"></p>
+    <p class="lock-note">
+      PIN disimpan dalam bentuk hash di perangkat ini saja. Tidak ada data yang dikirim ke internet.
+    </p>
+  </div>
+</div>
 
 <header class="appbar">
   <div class="brand">
@@ -91,7 +125,7 @@
 
     <div class="period-nav">
       <button id="btn-prev" class="btn-ghost btn-icon" type="button" aria-label="Periode sebelumnya">&#8592;</button>
-      <div id="period-label" class="period-label">â€”</div>
+      <div id="period-label" class="period-label">-</div>
       <button id="btn-next" class="btn-ghost btn-icon" type="button" aria-label="Periode berikutnya">&#8594;</button>
       <button id="btn-today" class="btn-ghost btn-sm" type="button">Hari ini</button>
     </div>
@@ -110,6 +144,7 @@
     <div id="history" class="history"></div>
 
     <div class="rekap-actions">
+      <button id="btn-export-pdf" class="btn-primary btn-inline" type="button">Ekspor PDF periode ini</button>
       <button id="btn-export-csv" class="btn-ghost" type="button">Ekspor CSV periode ini</button>
       <button id="btn-backup" class="btn-ghost" type="button">Backup data (JSON)</button>
       <label class="btn-ghost file-label">
@@ -122,7 +157,7 @@
   <!-- ============ HARGA ============ -->
   <section id="view-harga" class="view" aria-label="Pengaturan harga">
     <h1>Harga Menu</h1>
-    <p class="hint">Ubah harga lalu simpan. Perubahan langsung dipakai di kasir. Harga pada transaksi yang sudah tercatat tidak berubah.</p>
+    <p class="hint">Ubah harga lalu simpan. Perubahan langsung dipakai di kasir. Harga pada transaksi yang sudah tercatat tidak berubah. Gunakan titik sebagai pemisah ribuan, contoh: 10.000 atau 100.000.</p>
     <div id="price-editor" class="price-editor"></div>
     <div class="rekap-actions">
       <button id="btn-save-prices" class="btn-primary btn-inline" type="button">Simpan harga</button>
@@ -146,12 +181,12 @@
     <div class="card-block" id="block-bluetooth">
       <h2 class="card-title">Printer Bluetooth (MP-58A1, VS, Dooke, Kimipos, ALGOO) <span class="tag-ok">untuk HP</span></h2>
       <p class="card-text">
-        Halaman web <strong>tidak bisa</strong> mengirim langsung ke printer Bluetooth â€” Safari dan Chrome tidak punya akses ke jalur itu. Yang punya akses adalah <strong>aplikasi printer</strong> di HP. Jadi alurnya: MoodA menyiapkan teks struk, lalu dikirim ke aplikasi printer itu.
+        Halaman web <strong>tidak bisa</strong> mengirim langsung ke printer Bluetooth - Safari dan Chrome tidak punya akses ke jalur itu. Yang punya akses adalah <strong>aplikasi printer</strong> di HP. Jadi alurnya: MoodA menyiapkan teks struk, lalu dikirim ke aplikasi printer itu.
       </p>
       <div class="bridge-steps">
         <div class="step"><span class="step-n">1</span> Pasang aplikasi printer sesuai merek: <em>Kimipos / Dooke / ALGOO / VS</em>, atau <strong>RawBT</strong> (Android) / <strong>Printer Thermal</strong> (iPhone).</div>
         <div class="step"><span class="step-n">2</span> Nyalakan printer, sambungkan lewat <strong>Bluetooth</strong> di dalam aplikasi itu sampai statusnya tersambung.</div>
-        <div class="step"><span class="step-n">3</span> Di MoodA, tekan <strong>Bagikan struk</strong> lalu pilih aplikasi printer tersebut â€” atau <strong>Salin struk</strong> lalu tempel di aplikasi printer.</div>
+        <div class="step"><span class="step-n">3</span> Di MoodA, tekan <strong>Bagikan struk</strong> lalu pilih aplikasi printer tersebut - atau <strong>Salin struk</strong> lalu tempel di aplikasi printer.</div>
         <div class="step"><span class="step-n">4</span> Di aplikasi printer, pilih ukuran kertas 58&nbsp;mm lalu cetak.</div>
       </div>
       <div class="row-inline">
@@ -169,8 +204,8 @@
       </p>
       <div class="bridge-steps" id="mobile-steps">
         <div class="step"><span class="step-n">1</span> Tekan <strong>Cetak struk</strong> di bawah (atau setelah pembayaran).</div>
-        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan perangkat â€” pilih printer 58&nbsp;mm kamu.</div>
-        <div class="step"><span class="step-n">3</span> Kalau printer tidak muncul, itu berarti layanan cetak perangkat tidak mendukung printer tersebut â€” pakai jalur Bluetooth di atas.</div>
+        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan perangkat - pilih printer 58&nbsp;mm kamu.</div>
+        <div class="step"><span class="step-n">3</span> Kalau printer tidak muncul, itu berarti layanan cetak perangkat tidak mendukung printer tersebut - pakai jalur Bluetooth di atas.</div>
         <div class="step"><span class="step-n">4</span> Di layar cetak, pilih ukuran kertas 58&nbsp;mm dan margin <em>None</em> agar struk tidak terpotong.</div>
       </div>
       <div class="row-inline">
@@ -227,13 +262,13 @@
       <label class="field" id="field-paper">
         <span class="field-label">Lebar kertas</span>
         <select id="paper-width">
-          <option value="58">58 mm â€” 32 karakter</option>
-          <option value="80">80 mm â€” 48 karakter</option>
+          <option value="58">58 mm - 32 karakter</option>
+          <option value="80">80 mm - 48 karakter</option>
         </select>
       </label>
       <label class="check" id="check-bridge">
         <input id="use-bridge" type="checkbox">
-        <span>Pakai bridge WiFi (lewati dialog cetak) â€” hanya di komputer</span>
+        <span>Pakai bridge WiFi (lewati dialog cetak) - hanya di komputer</span>
       </label>
       <div class="row-inline">
         <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
@@ -265,7 +300,7 @@
         </button>
         <button type="button" class="method" data-method="E-Wallet" role="radio" aria-checked="false">
           <span class="method-name">E-Wallet</span>
-          <span class="method-note">GoPay Â· OVO Â· DANA</span>
+          <span class="method-note">GoPay ?* OVO ?* DANA</span>
         </button>
         <button type="button" class="method" data-method="Transfer" role="radio" aria-checked="false">
           <span class="method-name">Transfer</span>

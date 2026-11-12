@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * build-single.js â€” gabungkan MoodA jadi SATU file HTML mandiri.
+ * build-single.js - gabungkan MoodA jadi SATU file HTML mandiri.
  *
  * Semua CSS, JS, ikon, dan font ditanam (base64 / inline) sehingga file
  * bisa dikirim lewat WhatsApp dan dibuka tanpa folder pendamping.
@@ -76,7 +76,7 @@ function main() {
     `logo.src = ${JSON.stringify(iconPng)};`
   );
 
-  // 10. Service worker tidak berlaku di file:// â€” hapus registrasinya
+  // 10. Service worker tidak berlaku di file:// - hapus registrasinya
   html = html.replace(
     /<script>\s*if \('serviceWorker' in navigator[\s\S]*?<\/script>/,
     '<!-- service worker tidak dipakai pada versi satu-file -->'

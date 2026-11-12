@@ -1,4 +1,4 @@
-/* MoodA service worker — app shell offline-first. */
+/* MoodA service worker - app shell offline-first. */
 const CACHE = 'mooda-v3';
 const ASSETS = [
   './',
@@ -33,7 +33,7 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  // Jangan cache bridge lokal (127.0.0.1 / IP LAN) — harus selalu live.
+  // Jangan cache bridge lokal (127.0.0.1 / IP LAN) - harus selalu live.
   if (url.hostname === '127.0.0.1' || url.hostname === 'localhost' || /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[01])\./.test(url.hostname)) return;
 
   event.respondWith(
