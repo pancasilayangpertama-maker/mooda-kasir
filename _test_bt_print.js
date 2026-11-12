@@ -126,29 +126,23 @@ const UA_DESKTOP = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
     log(hasContent || /disalin/i.test(copyResult.status),
       'Salin struk menghasilkan teks struk', hasContent ? 'clipboard OK' : copyResult.status);
 
-    // ---- Lebar baris <= 32 kolom untuk 58mm (lewat hook internal, bukan clipboard) ----
-    const widths = await cdp.eval(`
-      return (() => {
-        const box = document.createElement('div');
-        document.getElementById('btn-copy-test').click();
-        return null;
-      })();
-    `);
+    // ---- Lebar baris <= 32 kolom untuk 58mm (baca teks asli dari blob unduhan) ----
     const widthCheck = await cdp.eval(`
-      // bangun ulang teks lewat jalur unduh: ambil dari anchor download yang dicegat
       let captured = null;
       const origCreate = URL.createObjectURL;
       URL.createObjectURL = (blob) => { captured = blob; return origCreate(blob); };
       document.getElementById('btn-download-test').click();
       URL.createObjectURL = origCreate;
       if (!captured) return null;
-      return captured.text ? captured.text().then(t => t.split('\\n').map(l => l.length)) : null;
+      return captured.text().then(t => ({ lens: t.split('\\n').map(l => l.length), text: t }));
     `);
-    if (widthCheck && widthCheck.length) {
-      const maxW = Math.max(...widthCheck);
+    if (widthCheck && widthCheck.lens && widthCheck.lens.length) {
+      const maxW = Math.max(...widthCheck.lens);
       log(maxW <= 32, 'Lebar baris struk <= 32 kolom (58mm)', 'maks ' + maxW);
+      const bad = widthCheck.text.split('\n').filter((l) => l.length > 32);
+      if (bad.length) console.log('   baris kepanjangan:', JSON.stringify(bad));
     } else {
-      log(true, 'Lebar baris dilewati (blob tidak terbaca)', '-');
+      log(false, 'Lebar baris tidak terbaca', '-');
     }
 
     // ---- Unduh struk .txt ----

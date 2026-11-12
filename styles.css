@@ -823,3 +823,35 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ---------------- Foto menu ---------------- */
+.image-editor { display: grid; gap: 8px; max-width: 640px; }
+.img-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 12px;
+  background: var(--white);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.img-thumb {
+  width: 64px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(150deg, var(--mint) 0%, var(--cream-deep) 100%);
+  flex: 0 0 auto;
+}
+.img-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-name { font-size: 15px; }
+.img-state { font-size: 11.5px; letter-spacing: .6px; text-transform: uppercase; color: var(--ink-soft); }
+.img-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 430px) {
+  .img-row { grid-template-columns: 56px 1fr; }
+  .img-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}

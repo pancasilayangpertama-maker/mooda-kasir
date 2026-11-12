@@ -1,4 +1,4 @@
-/* MoodA â€” Kasir kafe. HTML murni + localStorage, siap PWA/APK. */
+﻿/* MoodA Ã¢â‚¬â€ Kasir kafe. HTML murni + localStorage, siap PWA/APK. */
 (() => {
   'use strict';
 
@@ -73,7 +73,7 @@
   function defaults() {
     const prices = {};
     MENU.forEach(m => { prices[m.id] = m.price; });
-    return { version: 3, prices, orders: [], settings: { ...DEFAULT_SETTINGS } };
+    return { version: 4, prices, orders: [], images: {}, settings: { ...DEFAULT_SETTINGS } };
   }
 
   function load() {
@@ -83,9 +83,10 @@
       if (!raw) return base;
       const data = JSON.parse(raw);
       return {
-        version: 3,
+        version: 4,
         prices: Object.assign(base.prices, data.prices || {}),
         orders: Array.isArray(data.orders) ? data.orders : [],
+        images: (data.images && typeof data.images === 'object') ? data.images : {},
         settings: Object.assign({ ...DEFAULT_SETTINGS }, data.settings || {})
       };
     } catch (err) {
@@ -171,7 +172,7 @@
     });
     window.scrollTo({ top: 0, behavior: 'instant' in document.documentElement.style ? 'instant' : 'auto' });
     if (name === 'rekap') renderRekap();
-    if (name === 'harga') renderPriceEditor();
+    if (name === 'harga') { renderPriceEditor(); renderImageEditor(); }
     if (name === 'printer') renderPrinterSettings();
   }
 
@@ -180,8 +181,20 @@
   });
 
   // ---------- Ilustrasi menu (SVG inline, tanpa file gambar) ----------
-  function artFor(kind) {
+  function artFor(kind, itemId) {
     const wrap = el('div', 'menu-thumb');
+    const custom = itemId ? state.images[itemId] : null;
+
+    if (custom) {
+      const img = document.createElement('img');
+      img.src = custom;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      wrap.append(img);
+      return wrap;
+    }
+
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 100 100');
     svg.setAttribute('aria-hidden', 'true');
@@ -190,6 +203,129 @@
     svg.innerHTML = shapes;
     wrap.append(svg);
     return wrap;
+  }
+
+  // ---------- Gambar menu (bisa diganti sendiri) ----------
+  const IMG_MAX_SIDE = 640;      // px, sisi terpanjang
+  const IMG_QUALITY = 0.72;      // JPEG
+  const IMG_MAX_BYTES = 260 * 1024; // batas per gambar setelah kompresi
+
+  // Kompres di kanvas supaya localStorage tidak cepat penuh.
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('gagal membaca file'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('file bukan gambar yang didukung'));
+        img.onload = () => {
+          const scale = Math.min(1, IMG_MAX_SIDE / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFF7EA';
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+
+          let data = canvas.toDataURL('image/jpeg', IMG_QUALITY);
+          // turunkan kualitas bertahap kalau masih terlalu besar
+          let q = IMG_QUALITY;
+          while (data.length * 0.75 > IMG_MAX_BYTES && q > 0.35) {
+            q -= 0.1;
+            data = canvas.toDataURL('image/jpeg', q);
+          }
+          resolve(data);
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setMenuImage(itemId, dataUrl) {
+    if (dataUrl) state.images[itemId] = dataUrl;
+    else delete state.images[itemId];
+    if (!save()) {
+      if (dataUrl) delete state.images[itemId];
+      return false;
+    }
+    renderMenu();
+    renderCart();
+    if ($('#view-harga').classList.contains('is-active')) renderImageEditor();
+    return true;
+  }
+
+  function renderImageEditor() {
+    const box = $('#image-editor');
+    if (!box) return;
+    box.textContent = '';
+
+    MENU.forEach(item => {
+      const custom = state.images[item.id];
+      const row = el('div', 'img-row');
+
+      const thumb = el('div', 'img-thumb');
+      if (custom) {
+        const img = document.createElement('img');
+        img.src = custom;
+        img.alt = '';
+        thumb.append(img);
+      } else {
+        const fallback = artFor(item.art, null);
+        fallback.style.width = '100%';
+        fallback.style.height = '100%';
+        thumb.append(fallback);
+      }
+      row.append(thumb);
+
+      const info = el('div', 'img-info');
+      info.append(el('div', 'img-name', item.name));
+      info.append(el('div', 'img-state', custom ? 'Gambar sendiri' : 'Ilustrasi bawaan'));
+      row.append(info);
+
+      const actions = el('div', 'img-actions');
+
+      const label = el('label', 'btn-ghost btn-sm file-label');
+      label.append(document.createTextNode(custom ? 'Ganti' : 'Pilih foto'));
+      const fileInput = el('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.hidden = true;
+      fileInput.addEventListener('change', async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        try {
+          const data = await compressImage(file);
+          if (setMenuImage(item.id, data)) toast(`${item.name}: gambar diganti`);
+          else toast('Gagal menyimpan gambar (penyimpanan penuh)');
+        } catch (err) {
+          toast('Gagal memproses gambar');
+          console.error(err);
+        }
+        fileInput.value = '';
+      });
+      label.append(fileInput);
+      actions.append(label);
+
+      if (custom) {
+        const reset = el('button', 'btn-ghost btn-sm', 'Kembalikan');
+        reset.type = 'button';
+        reset.addEventListener('click', () => {
+          if (setMenuImage(item.id, null)) toast(`${item.name}: kembali ke ilustrasi`);
+        });
+        actions.append(reset);
+      }
+
+      row.append(actions);
+      box.append(row);
+    });
+
+    const used = Object.keys(state.images).length;
+    const note = $('#image-note');
+    if (note) note.textContent = `${used} dari ${MENU.length} menu memakai foto sendiri.`;
   }
 
   const ART = {
@@ -234,7 +370,7 @@
       card.dataset.id = item.id;
       card.setAttribute('aria-label', `Tambah ${item.name}, ${rupiah(priceOf(item.id))}`);
 
-      const thumb = artFor(item.art);
+      const thumb = artFor(item.art, item.id);
       thumb.append(el('span', 'menu-thumb-type', item.type === 'minuman' ? 'Minuman' : 'Makanan'));
       card.append(thumb);
 
@@ -269,7 +405,7 @@
     if (!line.ice) return '';
     const ice = ICE_OPTIONS.find(o => o.id === line.ice)?.label || '';
     const sugar = SUGAR_OPTIONS.find(o => o.id === line.sugar)?.label || '';
-    return `${ice} Â· ${sugar}`;
+    return `${ice} Ã‚Â· ${sugar}`;
   }
 
   function addToCart(item) {
@@ -339,7 +475,7 @@
       }
 
       const qty = el('div', 'qty');
-      const minus = el('button', null, 'âˆ’');
+      const minus = el('button', null, 'Ã¢Ë†â€™');
       minus.type = 'button';
       minus.setAttribute('aria-label', `Kurangi ${item.name}`);
       minus.addEventListener('click', () => {
@@ -440,7 +576,7 @@
   });
 
   function payLabel(method) {
-    if (method === 'E-Wallet') return 'E-Wallet Â· ' + ($('#pay-wallet').value || 'GoPay');
+    if (method === 'E-Wallet') return 'E-Wallet Ã‚Â· ' + ($('#pay-wallet').value || 'GoPay');
     return method;
   }
 
@@ -491,7 +627,7 @@
     cart = [];
     renderCart();
     closePay();
-    toast('Tersimpan Â· ' + rupiah(order.total));
+    toast('Tersimpan Ã‚Â· ' + rupiah(order.total));
     if ($('#view-rekap').classList.contains('is-active')) renderRekap();
 
     if (state.settings.autoPrint) await printOrder(order);
@@ -527,10 +663,10 @@
 
     const rule = (mark) => {
       const r = el('div', 'r-rule');
-      r.append(el('span', null, mark || 'â€¢'));
+      r.append(el('span', null, mark || 'Ã¢â‚¬Â¢'));
       return r;
     };
-    box.append(rule('â€¢'));
+    box.append(rule('Ã¢â‚¬Â¢'));
 
     // nomor besar
     box.append(el('div', 'r-nomor', meta.nomor));
@@ -547,14 +683,14 @@
     if (order.customer) metaBox.append(metaRow('Atas nama', order.customer));
     box.append(metaBox);
 
-    box.append(rule('â€¢'));
+    box.append(rule('Ã¢â‚¬Â¢'));
 
     // item
     const items = el('div', 'r-items');
     order.lines.forEach(l => {
       const row = el('div', 'r-item');
       const nameRow = el('div', 'r-item-name');
-      nameRow.append(el('span', null, `${l.qty}Ã— ${l.name}`));
+      nameRow.append(el('span', null, `${l.qty}Ãƒâ€” ${l.name}`));
       nameRow.append(el('span', null, rupiah(l.subtotal)));
       row.append(nameRow);
       if (l.variant) row.append(el('div', 'r-item-note', l.variant));
@@ -562,7 +698,7 @@
     });
     box.append(items);
 
-    box.append(rule('â€¢'));
+    box.append(rule('Ã¢â‚¬Â¢'));
 
     // ringkasan
     const sum = el('div', 'r-sum');
@@ -603,23 +739,28 @@
   function receiptPlainText(order) {
     const s = state.settings;
     const meta = receiptMeta(order);
-    const cols = Number(s.paperWidth) === 80 ? 48 : 32;
+    const cols = Number(s.paperWidth) === 80 ? 44 : 30;
     const line = (ch) => ch.repeat(cols);
     const kv = (k, v) => {
       const space = Math.max(1, cols - k.length - v.length);
       return k + ' '.repeat(space) + v;
     };
+    // Penjaga terakhir: apa pun yang terjadi, jangan pernah lewat lebar kertas.
+    const fit = (txt) => (txt.length <= cols ? txt : txt.slice(0, cols));
     const out = [];
-    out.push((s.receiptName || 'MoodA').toUpperCase());
-    if (s.receiptTagline) out.push(s.receiptTagline);
+    out.push(fit(trunc((s.receiptName || 'MoodA').toUpperCase(), cols)));
+    if (s.receiptTagline) out.push(fit(trunc(s.receiptTagline, cols)));
     out.push(line('-'));
     out.push(kv('No', meta.nomor));
     out.push(kv(meta.tanggal, meta.jam));
-    if (order.customer) out.push(kv('Atas nama', order.customer));
+    if (order.customer) out.push(fit(kv('Nama', trunc(order.customer, cols - 6))));
     out.push(line('-'));
     order.lines.forEach(l => {
-      out.push(kv(`${l.qty}x ${l.name}`, rupiah(l.subtotal)));
-      if (l.variant) out.push('  ' + l.variant);
+      const price = rupiah(l.subtotal);
+      const qtyPrefix = `${l.qty}x `;
+      const nameRoom = cols - qtyPrefix.length - price.length - 1;
+      out.push(fit(kv(qtyPrefix + trunc(l.name, Math.max(4, nameRoom)), price)));
+      if (l.variant) out.push(fit(trunc('  ' + l.variant, cols)));
     });
     out.push(line('-'));
     const itemCount = order.lines.reduce((n, l) => n + l.qty, 0);
@@ -629,10 +770,10 @@
       out.push(kv('Tunai', rupiah(order.received)));
       out.push(kv('Kembali', rupiah(order.change)));
     }
-    out.push((order.methodLabel || order.method).toUpperCase());
+    out.push(fit(trunc('Bayar: ' + (order.methodLabel || order.method), cols)));
     out.push(line('-'));
     out.push('Terima kasih!');
-    if (s.receiptFooter) out.push(s.receiptFooter);
+    if (s.receiptFooter) out.push(fit(trunc(s.receiptFooter, cols)));
     return out.join('\n');
   }
 
@@ -679,11 +820,13 @@
       return k + ' '.repeat(space) + v;
     };
     // Nama panjang dipotong agar tidak melewati lebar kertas (thermal tidak auto-wrap rapi).
-    const trunc = (txt, max) => (txt.length <= max ? txt : txt.slice(0, Math.max(1, max - 1)).trimEnd() + 'â€¦');
+    const trunc = (txt, max) => (txt.length <= max ? txt : txt.slice(0, Math.max(1, max - 1)).trimEnd() + '\u2026');
+    // Penjaga terakhir: apa pun yang terjadi, jangan pernah lewat lebar kertas.
+    const fit = (txt) => (txt.length <= cols ? txt : txt.slice(0, cols));
     const meta = receiptMeta(order);
     const out = [];
-    out.push(trunc((s.receiptName || 'MoodA').toUpperCase(), cols));
-    if (s.receiptTagline) out.push(trunc(s.receiptTagline, cols));
+    out.push(fit(trunc((s.receiptName || 'MoodA').toUpperCase(), cols)));
+    if (s.receiptTagline) out.push(fit(trunc(s.receiptTagline, cols)));
     out.push(line());
     out.push(kv('No', meta.nomor));
     out.push(kv(meta.tanggal, meta.jam));
@@ -693,7 +836,7 @@
       const price = rupiah(l.subtotal);
       const qtyPrefix = `${l.qty}x `;
       const nameRoom = cols - qtyPrefix.length - price.length - 1;
-      out.push(kv(qtyPrefix + trunc(l.name, Math.max(6, nameRoom)), price));
+      out.push(fit(kv(qtyPrefix + trunc(l.name, Math.max(4, nameRoom)), price)));
       if (l.variant) out.push(trunc('   ' + l.variant, cols));
     });
     out.push(line());
@@ -704,10 +847,10 @@
       out.push(kv('Tunai', rupiah(order.received)));
       out.push(kv('Kembali', rupiah(order.change)));
     }
-    out.push(trunc('Bayar: ' + (order.methodLabel || order.method), cols));
+    out.push(fit(trunc('Bayar: ' + (order.methodLabel || order.method), cols)));
     out.push(line());
     out.push('Terima kasih!');
-    if (s.receiptFooter) out.push(trunc(s.receiptFooter, cols));
+    if (s.receiptFooter) out.push(fit(trunc(s.receiptFooter, cols)));
     return out.join('\n');
   }
 
@@ -808,12 +951,12 @@
   async function scanBridge() {
     const st = $('#bridge-status');
     st.className = 'status-line';
-    st.textContent = 'Menghubungi bridgeâ€¦';
+    st.textContent = 'Menghubungi bridgeÃ¢â‚¬Â¦';
     try {
       const info = await bridgeHealth();
       st.className = 'status-line is-ok';
       st.textContent = info.printerIp
-        ? `Bridge OK Â· printer terdeteksi: ${info.printerIp}`
+        ? `Bridge OK Ã‚Â· printer terdeteksi: ${info.printerIp}`
         : 'Bridge aktif, printer belum diketahui';
       if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
     } catch (err) {
@@ -827,7 +970,7 @@
   async function testBridge() {
     const st = $('#bridge-status');
     st.className = 'status-line';
-    st.textContent = 'Menguji koneksi printerâ€¦';
+    st.textContent = 'Menguji koneksi printerÃ¢â‚¬Â¦';
     const ip = $('#printer-ip').value.trim();
     try {
       const base = ($('#bridge-url').value.trim() || 'http://127.0.0.1:9110').replace(/\/$/, '');
@@ -842,7 +985,7 @@
       st.className = 'status-line is-ok';
       if (data.printerIp) {
         $('#printer-ip').value = data.printerIp;
-        st.textContent = `Terhubung ke printer ${data.printerIp} Â· port ${data.port || 9100}`;
+        st.textContent = `Terhubung ke printer ${data.printerIp} Ã‚Â· port ${data.port || 9100}`;
       } else {
         st.textContent = 'Bridge aktif. Isi IP printer kalau pencarian otomatis tidak menemukan.';
       }
@@ -875,7 +1018,7 @@
     if (period === 'minggu') {
       const end = new Date(start); end.setDate(end.getDate() + 6);
       const fmt = (d) => `${d.getDate()} ${bulan[d.getMonth()].slice(0, 3)}`;
-      return `${fmt(start)} â€“ ${fmt(end)} ${end.getFullYear()}`;
+      return `${fmt(start)} Ã¢â‚¬â€œ ${fmt(end)} ${end.getFullYear()}`;
     }
     return `${bulan[start.getMonth()]} ${start.getFullYear()}`;
   }
@@ -935,12 +1078,12 @@
         const card = el('div', 'trx');
         const head = el('div', 'trx-top');
         head.append(el('div', 'trx-id',
-          `${o.id.replace('TRX-', '#')} Â· ${new Date(o.at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`));
+          `${o.id.replace('TRX-', '#')} Ã‚Â· ${new Date(o.at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`));
         head.append(el('div', 'trx-total money', rupiah(o.total)));
         card.append(head);
 
         card.append(el('div', 'trx-lines',
-          o.lines.map(l => `${l.qty}Ã— ${l.name}${l.variant ? ' Â· ' + l.variant : ''}`).join(' â€¢ ')));
+          o.lines.map(l => `${l.qty}Ãƒâ€” ${l.name}${l.variant ? ' Ã‚Â· ' + l.variant : ''}`).join(' Ã¢â‚¬Â¢ ')));
 
         const tags = el('div', 'trx-tags');
         tags.append(el('span', 'trx-tag method', o.methodLabel || o.method));
@@ -1095,7 +1238,7 @@
     lines: [
       { name: 'Wonton Mini', qty: 1, price: 15000, subtotal: 15000, variant: '' },
       { name: 'Nasi Ayam Selimut', qty: 1, price: 12000, subtotal: 12000, variant: '' },
-      { name: 'Signature Chocolate MoodA', qty: 1, price: 8000, subtotal: 8000, variant: 'Less ice Â· No sugar' }
+      { name: 'Signature Chocolate MoodA', qty: 1, price: 8000, subtotal: 8000, variant: 'Less ice Ã‚Â· No sugar' }
     ]
   });
 
@@ -1153,13 +1296,14 @@
         if (!data || !Array.isArray(data.orders)) throw new Error('Format tidak dikenali');
         if (!confirm(`Pulihkan backup dengan ${data.orders.length} transaksi? Data saat ini diganti.`)) return;
         state = {
-          version: 3,
+          version: 4,
           prices: Object.assign(defaults().prices, data.prices || {}),
           orders: data.orders,
+          images: (data.images && typeof data.images === 'object') ? data.images : {},
           settings: Object.assign({ ...DEFAULT_SETTINGS }, data.settings || {})
         };
         save();
-        renderMenu(); renderCart(); renderRekap(); renderPriceEditor(); renderPrinterSettings();
+        renderMenu(); renderCart(); renderRekap(); renderPriceEditor(); renderImageEditor(); renderPrinterSettings();
         toast('Backup dipulihkan');
       } catch (err) {
         toast('File backup tidak valid');
