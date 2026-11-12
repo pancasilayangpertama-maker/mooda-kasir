@@ -50,11 +50,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Terima lisensi Android SDK
-        run: yes | sdkmanager --licenses > /dev/null || true
-
       - name: Install Android SDK 36
-        run: sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+        run: |
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
+          echo "sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
