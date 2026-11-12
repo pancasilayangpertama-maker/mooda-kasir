@@ -181,7 +181,7 @@
     <div class="card-block" id="block-bluetooth">
       <h2 class="card-title">Printer Bluetooth (MP-58A1, VS, Dooke, Kimipos, ALGOO) <span class="tag-ok">untuk HP</span></h2>
       <p class="card-text">
-        Halaman web <strong>tidak bisa</strong> mengirim langsung ke printer Bluetooth - Safari dan Chrome tidak punya akses ke jalur itu. Yang punya akses adalah <strong>aplikasi printer</strong> di HP. Jadi alurnya: MoodA menyiapkan teks struk, lalu dikirim ke aplikasi printer itu.
+        Di <strong>aplikasi Android (APK) MoodA</strong>, struk dikirim langsung ke printer lewat Bluetooth - tanpa aplikasi perantara. Di browser, Chrome dan Safari <strong>tidak bisa</strong> membuka jalur Bluetooth, jadi di sana pakai <strong>Bagikan</strong> / <strong>Salin struk</strong> ke aplikasi printer merek.
       </p>
       <div class="bridge-steps">
         <div class="step"><span class="step-n">1</span> Pasang aplikasi printer sesuai merek: <em>Kimipos / Dooke / ALGOO / VS</em>, atau <strong>RawBT</strong> (Android) / <strong>Printer Thermal</strong> (iPhone).</div>
@@ -195,6 +195,17 @@
         <button id="btn-download-test" class="btn-ghost" type="button">Unduh struk (.txt)</button>
       </div>
       <div id="share-status" class="status-line" role="status" aria-live="polite">Belum ada yang dibagikan.</div>
+
+      <div class="field">
+        <span class="field-label">Printer tersimpan <em>(khusus aplikasi Android)</em></span>
+        <select id="bt-device">
+          <option value="">- pilih printer -</option>
+        </select>
+      </div>
+      <div class="row-inline">
+        <button id="btn-bt-scan" class="btn-ghost btn-inline" type="button">Cari printer Bluetooth</button>
+      </div>
+      <div id="bt-status" class="status-line" role="status" aria-live="polite">Pasangkan printer di Setelan Bluetooth Android dulu, lalu tekan Cari printer.</div>
     </div>
 
     <div class="card-block" id="block-mobile">

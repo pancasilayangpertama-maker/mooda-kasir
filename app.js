@@ -37,6 +37,8 @@
     useBridge: false,
     bridgeUrl: 'http://127.0.0.1:9110',
     printerIp: '',
+    btAddress: '',
+    btName: '',
     paperWidth: '58'
   };
 
@@ -800,7 +802,58 @@
     };
   }
 
+  // ---------- Cetak langsung ke printer Bluetooth (khusus APK Android) ----------
+  const nativePrinter = () =>
+    (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MoodaPrinter) || null;
+
+  function toBase64(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 1) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+
+  // Byte ESC/POS: baris pertama jadi judul tengah + huruf dobel, sisanya rata kiri.
+  function escposPayload(order) {
+    const ESC = 0x1b;
+    const GS = 0x1d;
+    const out = [ESC, 0x40];
+    const put = (txt) => { for (const ch of txt) out.push(ch.charCodeAt(0) & 0x7f); };
+    escposText(order).split('\n').forEach((raw, i) => {
+      const line = raw.replace(/[^\x20-\x7E\u00A0-\u024F]/g, ' ');
+      if (i === 0) {
+        out.push(ESC, 0x61, 0x01, ESC, 0x45, 0x01, GS, 0x21, 0x11);
+        put(line);
+        out.push(0x0a, GS, 0x21, 0x00, ESC, 0x45, 0x00);
+        return;
+      }
+      out.push(ESC, 0x61, 0x00);
+      put(line);
+      out.push(0x0a);
+    });
+    out.push(0x0a, 0x0a, 0x0a, GS, 0x56, 0x01);
+    return new Uint8Array(out);
+  }
+
+  async function printBluetooth(order) {
+    const plugin = nativePrinter();
+    if (!plugin) return false;
+    const address = state.settings.btAddress;
+    if (!address) {
+      toast('Pilih printer Bluetooth dulu di tab Printer');
+      return false;
+    }
+    try {
+      await plugin.print({ address, data: toBase64(escposPayload(order)) });
+      toast('Struk terkirim ke printer');
+      return true;
+    } catch (err) {
+      toast('Gagal cetak: ' + ((err && err.message) || err));
+      return false;
+    }
+  }
+
   async function printOrder(order) {
+    if (await printBluetooth(order)) { markPrinted(order); return; }
     if (state.settings.useBridge && !isMobile) {
       const ok = await sendToBridge(order);
       if (ok) { markPrinted(order); return; }
@@ -1238,7 +1291,53 @@
     $('#printer-ip').value = s.printerIp;
     $('#paper-width').value = s.paperWidth || '58';
     $('#printer-note').textContent = '';
+    renderBtDevices();
     applyDeviceUi();
+  }
+
+  function renderBtDevices() {
+    const sel = $('#bt-device');
+    if (!sel) return;
+    sel.textContent = '';
+    const empty = el('option', null, '- pilih printer -');
+    empty.value = '';
+    sel.append(empty);
+    if (state.settings.btAddress) {
+      const saved = el('option', null, `${state.settings.btName || 'Printer'} (${state.settings.btAddress})`);
+      saved.value = state.settings.btAddress;
+      sel.append(saved);
+      sel.value = state.settings.btAddress;
+    }
+  }
+
+  async function scanBtDevices() {
+    const plugin = nativePrinter();
+    const status = $('#bt-status');
+    if (!status) return;
+    if (!plugin) {
+      status.textContent = 'Pencarian printer hanya tersedia di aplikasi Android. Di browser, pakai Bagikan / Salin struk.';
+      return;
+    }
+    status.textContent = 'Mencari printer...';
+    try {
+      const { devices } = await plugin.devices();
+      const sel = $('#bt-device');
+      sel.textContent = '';
+      const empty = el('option', null, '- pilih printer -');
+      empty.value = '';
+      sel.append(empty);
+      (devices || []).forEach((d) => {
+        const o = el('option', null, `${d.name} (${d.address})`);
+        o.value = d.address;
+        sel.append(o);
+      });
+      if (state.settings.btAddress) sel.value = state.settings.btAddress;
+      status.textContent = (devices || []).length
+        ? `${devices.length} printer terpasang. Pilih satu lalu Simpan pengaturan.`
+        : 'Belum ada printer terpasang. Pasangkan dulu di Setelan Bluetooth Android.';
+    } catch (err) {
+      status.textContent = 'Gagal mencari printer: ' + ((err && err.message) || err);
+    }
   }
 
   $('#btn-save-printer').addEventListener('click', () => {
@@ -1250,6 +1349,10 @@
       useBridge: isMobile ? false : $('#use-bridge').checked,
       bridgeUrl: $('#bridge-url').value.trim() || DEFAULT_SETTINGS.bridgeUrl,
       printerIp: $('#printer-ip').value.trim(),
+      btAddress: $('#bt-device') ? $('#bt-device').value : '',
+      btName: $('#bt-device') && $('#bt-device').selectedOptions[0]
+        ? $('#bt-device').selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/, '').trim()
+        : '',
       paperWidth: $('#paper-width').value
     };
     if (save()) {
@@ -1260,6 +1363,7 @@
 
   $('#btn-bridge-scan').addEventListener('click', scanBridge);
   $('#btn-bridge-test').addEventListener('click', testBridge);
+  if ($('#btn-bt-scan')) $('#btn-bt-scan').addEventListener('click', scanBtDevices);
 
   const SAMPLE_ORDER = () => ({
     id: 'TRX-TEST',
