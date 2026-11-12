@@ -174,90 +174,78 @@
   </section>
 
   <!-- ============ PRINTER ============ -->
-  <section id="view-printer" class="view" aria-label="Pengaturan printer">
+    <section id="view-printer" class="view" aria-label="Pengaturan printer">
     <h1>Printer Struk</h1>
-    <p class="hint">Printer thermal 58&nbsp;mm. Pilih cara yang sesuai printer Bos Dims.</p>
+    <p class="hint">Cetak ke printer Bluetooth, printer jaringan (WiFi/LAN), atau lewat layar cetak bawaan perangkat.</p>
 
-    <div class="card-block" id="block-bluetooth">
-      <h2 class="card-title">Printer Bluetooth (MP-58A1, VS, Dooke, Kimipos, ALGOO) <span class="tag-ok">untuk HP</span></h2>
-      <p class="card-text">
-        Di <strong>aplikasi Android (APK) MoodA</strong>, struk dikirim langsung ke printer lewat Bluetooth - tanpa aplikasi perantara. Di browser, Chrome dan Safari <strong>tidak bisa</strong> membuka jalur Bluetooth, jadi di sana pakai <strong>Bagikan</strong> / <strong>Salin struk</strong> ke aplikasi printer merek.
-      </p>
-      <div class="bridge-steps">
-        <div class="step"><span class="step-n">1</span> Pasang aplikasi printer sesuai merek: <em>Kimipos / Dooke / ALGOO / VS</em>, atau <strong>RawBT</strong> (Android) / <strong>Printer Thermal</strong> (iPhone).</div>
-        <div class="step"><span class="step-n">2</span> Nyalakan printer, sambungkan lewat <strong>Bluetooth</strong> di dalam aplikasi itu sampai statusnya tersambung.</div>
-        <div class="step"><span class="step-n">3</span> Di MoodA, tekan <strong>Bagikan struk</strong> lalu pilih aplikasi printer tersebut - atau <strong>Salin struk</strong> lalu tempel di aplikasi printer.</div>
-        <div class="step"><span class="step-n">4</span> Di aplikasi printer, pilih ukuran kertas 58&nbsp;mm lalu cetak.</div>
-      </div>
-      <div class="row-inline">
-        <button id="btn-share-test" class="btn-primary btn-inline" type="button">Bagikan struk uji</button>
-        <button id="btn-copy-test" class="btn-ghost" type="button">Salin struk uji</button>
-        <button id="btn-download-test" class="btn-ghost" type="button">Unduh struk (.txt)</button>
-      </div>
-      <div id="share-status" class="status-line" role="status" aria-live="polite">Belum ada yang dibagikan.</div>
+    <div class="card-block">
+      <h2 class="card-title">Sambungan printer</h2>
 
       <div class="field">
-        <span class="field-label">Printer tersimpan <em>(khusus aplikasi Android)</em></span>
-        <select id="bt-device">
-          <option value="">- pilih printer -</option>
-        </select>
-      </div>
-      <div class="row-inline">
-        <button id="btn-bt-scan" class="btn-ghost btn-inline" type="button">Cari printer Bluetooth</button>
-      </div>
-      <div id="bt-status" class="status-line" role="status" aria-live="polite">Pasangkan printer di Setelan Bluetooth Android dulu, lalu tekan Cari printer.</div>
-    </div>
-
-    <div class="card-block" id="block-mobile">
-      <h2 class="card-title">Cetak lewat layar cetak perangkat <span class="tag-ok">cadangan</span></h2>
-      <p class="card-text" id="mobile-help">
-        Cocok kalau printer terdeteksi oleh layanan cetak bawaan perangkat (AirPrint di iPhone, atau printer jaringan di Android/Windows).
-      </p>
-      <div class="bridge-steps" id="mobile-steps">
-        <div class="step"><span class="step-n">1</span> Tekan <strong>Cetak struk</strong> di bawah (atau setelah pembayaran).</div>
-        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan perangkat - pilih printer 58&nbsp;mm kamu.</div>
-        <div class="step"><span class="step-n">3</span> Kalau printer tidak muncul, itu berarti layanan cetak perangkat tidak mendukung printer tersebut - pakai jalur Bluetooth di atas.</div>
-        <div class="step"><span class="step-n">4</span> Di layar cetak, pilih ukuran kertas 58&nbsp;mm dan margin <em>None</em> agar struk tidak terpotong.</div>
-      </div>
-      <div class="row-inline">
-        <button id="btn-print-test" class="btn-ghost" type="button">Cetak struk uji</button>
-        <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
-      </div>
-      <p class="card-text" style="margin:12px 0 0;font-size:13px;">
-        Struk juga bisa disimpan jadi PDF lewat pilihan <em>Save as PDF</em> di layar cetak.
-      </p>
-    </div>
-
-    <div class="card-block" id="block-bridge">
-      <h2 class="card-title">Mode cetak langsung (opsional, khusus komputer)</h2>
-      <p class="card-text">
-        Fitur ini hanya bisa dipakai kalau MoodA dibuka di <strong>komputer</strong> yang satu WiFi dengan printer, dan ada <strong>bridge</strong> kecil yang dijalankan di komputer itu. Di HP fitur ini tidak tersedia.
-      </p>
-      <div class="bridge-steps">
-        <div class="step"><span class="step-n">1</span> Di komputer: jalankan <code>node bridge.js</code>, biarkan jendelanya terbuka.</div>
-        <div class="step"><span class="step-n">2</span> Bridge mencari printer otomatis, atau isi IP printer di bawah.</div>
-        <div class="step"><span class="step-n">3</span> Klik <em>Tes koneksi</em>. Kalau hijau, cetak langsung tanpa dialog.</div>
+        <span class="field-label" id="printer-type-label">Tipe printer</span>
+        <div class="seg" id="printer-type" role="radiogroup" aria-labelledby="printer-type-label">
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-type="bluetooth">Bluetooth</button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-type="wifi">WiFi / LAN</button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-type="system">Cetak sistem</button>
+        </div>
+        <p class="field-help" id="type-help"></p>
       </div>
 
-      <label class="field">
-        <span class="field-label">Alamat bridge</span>
-        <input id="bridge-url" type="text" placeholder="http://127.0.0.1:9110">
-      </label>
-
-      <label class="field">
-        <span class="field-label">IP printer <em>(opsional, temukan otomatis)</em></span>
-        <input id="printer-ip" type="text" placeholder="192.168.1.50">
-      </label>
-
-      <div class="row-inline">
-        <button id="btn-bridge-scan" class="btn-ghost" type="button">Cari printer</button>
-        <button id="btn-bridge-test" class="btn-primary btn-inline" type="button">Tes koneksi</button>
+      <div class="ptype-panel" id="panel-bluetooth" hidden>
+        <label class="field">
+          <span class="field-label">Printer Bluetooth</span>
+          <select id="bt-device">
+            <option value="">- pilih printer -</option>
+          </select>
+        </label>
+        <div class="row-inline">
+          <button id="btn-bt-scan" class="btn-ghost" type="button">Cari printer</button>
+        </div>
+        <div id="bt-status" class="status-line" role="status" aria-live="polite">Pasangkan printer di Setelan Bluetooth Android dulu.</div>
       </div>
-      <div id="bridge-status" class="status-line" role="status" aria-live="polite">Bridge belum dicek.</div>
+
+      <div class="ptype-panel" id="panel-wifi" hidden>
+        <label class="field">
+          <span class="field-label">Alamat IP printer</span>
+          <input id="printer-ip" type="text" inputmode="decimal" placeholder="192.168.1.50" autocomplete="off">
+        </label>
+        <label class="field">
+          <span class="field-label">Port <em>raw, umumnya 9100</em></span>
+          <input id="printer-port" type="number" inputmode="numeric" min="1" max="65535" placeholder="9100">
+        </label>
+        <div class="row-inline">
+          <button id="btn-tcp-test" class="btn-ghost" type="button">Tes koneksi</button>
+        </div>
+        <div id="tcp-status" class="status-line" role="status" aria-live="polite">HP dan printer harus di jaringan WiFi yang sama.</div>
+      </div>
+
+      <div class="ptype-panel" id="panel-system" hidden>
+        <p class="card-text">Struk dibuka di layar cetak bawaan perangkat. Cocok untuk printer yang punya driver atau dukungan AirPrint.</p>
+        <div class="row-inline">
+          <button id="btn-print-test" class="btn-ghost" type="button">Cetak struk uji</button>
+          <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
+        </div>
+      </div>
+
+      <div class="row-inline" style="margin-top:14px">
+        <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
+      </div>
+      <div id="printer-note" class="save-note" role="status" aria-live="polite"></div>
     </div>
 
     <div class="card-block">
-      <h2 class="card-title">Struk</h2>
+      <h2 class="card-title">Bagikan struk</h2>
+      <p class="card-text">Kalau printer belum tersambung, kirim struk ke aplikasi printer merek.</p>
+      <div class="row-inline">
+        <button id="btn-share-test" class="btn-ghost" type="button">Bagikan</button>
+        <button id="btn-copy-test" class="btn-ghost" type="button">Salin</button>
+        <button id="btn-download-test" class="btn-ghost" type="button">Unduh .txt</button>
+      </div>
+      <div id="share-status" class="status-line" role="status" aria-live="polite">Belum ada yang dibagikan.</div>
+    </div>
+
+    <div class="card-block">
+      <h2 class="card-title">Detail struk</h2>
       <label class="field">
         <span class="field-label">Nama di struk</span>
         <input id="receipt-name" type="text" maxlength="32" placeholder="MoodA">
@@ -277,14 +265,6 @@
           <option value="80">80 mm - 48 karakter</option>
         </select>
       </label>
-      <label class="check" id="check-bridge">
-        <input id="use-bridge" type="checkbox">
-        <span>Pakai bridge WiFi (lewati dialog cetak) - hanya di komputer</span>
-      </label>
-      <div class="row-inline">
-        <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
-      </div>
-      <div id="printer-note" class="save-note" role="status" aria-live="polite"></div>
     </div>
   </section>
 </main>

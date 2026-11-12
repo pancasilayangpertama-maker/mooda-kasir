@@ -18,6 +18,8 @@ import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.Set;
 import java.util.UUID;
 
@@ -164,6 +166,67 @@ public class MoodaPrinterPlugin extends Plugin {
                     if (socket != null) socket.close();
                 } catch (Exception ignored) {
                 }
+            }
+        }).start();
+    }
+
+    // ---------- Printer jaringan (WiFi/LAN, raw TCP 9100) ----------
+
+    @PluginMethod
+    public void testTcp(PluginCall call) {
+        final String host = call.getString("host");
+        final int port = call.getInt("port", 9100);
+        if (host == null || host.isEmpty()) {
+            call.reject("Alamat IP printer kosong.");
+            return;
+        }
+        new Thread(() -> {
+            try (Socket socket = new Socket()) {
+                socket.connect(new InetSocketAddress(host, port), 5000);
+                JSObject ret = new JSObject();
+                ret.put("ok", true);
+                call.resolve(ret);
+            } catch (Exception e) {
+                call.reject("Tidak bisa terhubung: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    @PluginMethod
+    public void printTcp(PluginCall call) {
+        final String host = call.getString("host");
+        final int port = call.getInt("port", 9100);
+        final String data = call.getString("data");
+        if (host == null || host.isEmpty()) {
+            call.reject("Alamat IP printer kosong.");
+            return;
+        }
+        if (data == null || data.isEmpty()) {
+            call.reject("Data struk kosong.");
+            return;
+        }
+        final byte[] bytes;
+        try {
+            bytes = Base64.decode(data, Base64.NO_WRAP);
+        } catch (Exception e) {
+            call.reject("Data struk tidak valid.");
+            return;
+        }
+        new Thread(() -> {
+            try (Socket socket = new Socket()) {
+                socket.connect(new InetSocketAddress(host, port), 6000);
+                OutputStream out = socket.getOutputStream();
+                final int chunk = 256;
+                for (int i = 0; i < bytes.length; i += chunk) {
+                    out.write(bytes, i, Math.min(chunk, bytes.length - i));
+                    out.flush();
+                    Thread.sleep(15);
+                }
+                out.flush();
+                Thread.sleep(150);
+                call.resolve();
+            } catch (Exception e) {
+                call.reject("Gagal cetak: " + e.getMessage());
             }
         }).start();
     }

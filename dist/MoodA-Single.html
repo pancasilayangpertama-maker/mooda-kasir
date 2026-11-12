@@ -943,6 +943,49 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
 }
 .lock-note { font-size: 11.5px; color: var(--ink-soft); margin: 14px 0 0; line-height: 1.5; }
 
+/* ---- Segmented control: tipe printer ---- */
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  padding: 5px;
+  background: var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.seg-btn {
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.seg-btn:hover { color: var(--ink); }
+.seg-btn.is-active {
+  background: var(--white);
+  color: var(--teal-dark);
+  box-shadow: 0 1px 2px rgba(31, 41, 51, .10);
+}
+.seg-btn:focus-visible {
+  outline: 2.5px solid var(--mango-hi);
+  outline-offset: 2px;
+}
+.seg-btn[hidden] { display: none; }
+.field-help {
+  margin: 9px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.ptype-panel { padding-top: 4px; }
+.ptype-panel[hidden] { display: none; }
+
 </style>
 <meta name="mooda-build" content="single-file">
 </head>
@@ -1105,79 +1148,78 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   </section>
 
   <!-- ============ PRINTER ============ -->
-  <section id="view-printer" class="view" aria-label="Pengaturan printer">
+    <section id="view-printer" class="view" aria-label="Pengaturan printer">
     <h1>Printer Struk</h1>
-    <p class="hint">Printer thermal 58&nbsp;mm. Pilih cara yang sesuai printer Bos Dims.</p>
+    <p class="hint">Cetak ke printer Bluetooth, printer jaringan (WiFi/LAN), atau lewat layar cetak bawaan perangkat.</p>
 
-    <div class="card-block" id="block-bluetooth">
-      <h2 class="card-title">Printer Bluetooth (MP-58A1, VS, Dooke, Kimipos, ALGOO) <span class="tag-ok">untuk HP</span></h2>
-      <p class="card-text">
-        Halaman web <strong>tidak bisa</strong> mengirim langsung ke printer Bluetooth - Safari dan Chrome tidak punya akses ke jalur itu. Yang punya akses adalah <strong>aplikasi printer</strong> di HP. Jadi alurnya: MoodA menyiapkan teks struk, lalu dikirim ke aplikasi printer itu.
-      </p>
-      <div class="bridge-steps">
-        <div class="step"><span class="step-n">1</span> Pasang aplikasi printer sesuai merek: <em>Kimipos / Dooke / ALGOO / VS</em>, atau <strong>RawBT</strong> (Android) / <strong>Printer Thermal</strong> (iPhone).</div>
-        <div class="step"><span class="step-n">2</span> Nyalakan printer, sambungkan lewat <strong>Bluetooth</strong> di dalam aplikasi itu sampai statusnya tersambung.</div>
-        <div class="step"><span class="step-n">3</span> Di MoodA, tekan <strong>Bagikan struk</strong> lalu pilih aplikasi printer tersebut - atau <strong>Salin struk</strong> lalu tempel di aplikasi printer.</div>
-        <div class="step"><span class="step-n">4</span> Di aplikasi printer, pilih ukuran kertas 58&nbsp;mm lalu cetak.</div>
+    <div class="card-block">
+      <h2 class="card-title">Sambungan printer</h2>
+
+      <div class="field">
+        <span class="field-label" id="printer-type-label">Tipe printer</span>
+        <div class="seg" id="printer-type" role="radiogroup" aria-labelledby="printer-type-label">
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-type="bluetooth">Bluetooth</button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-type="wifi">WiFi / LAN</button>
+          <button class="seg-btn" type="button" role="radio" aria-checked="false" data-type="system">Cetak sistem</button>
+        </div>
+        <p class="field-help" id="type-help"></p>
       </div>
+
+      <div class="ptype-panel" id="panel-bluetooth" hidden>
+        <label class="field">
+          <span class="field-label">Printer Bluetooth</span>
+          <select id="bt-device">
+            <option value="">- pilih printer -</option>
+          </select>
+        </label>
+        <div class="row-inline">
+          <button id="btn-bt-scan" class="btn-ghost" type="button">Cari printer</button>
+        </div>
+        <div id="bt-status" class="status-line" role="status" aria-live="polite">Pasangkan printer di Setelan Bluetooth Android dulu.</div>
+      </div>
+
+      <div class="ptype-panel" id="panel-wifi" hidden>
+        <label class="field">
+          <span class="field-label">Alamat IP printer</span>
+          <input id="printer-ip" type="text" inputmode="decimal" placeholder="192.168.1.50" autocomplete="off">
+        </label>
+        <label class="field">
+          <span class="field-label">Port <em>raw, umumnya 9100</em></span>
+          <input id="printer-port" type="number" inputmode="numeric" min="1" max="65535" placeholder="9100">
+        </label>
+        <div class="row-inline">
+          <button id="btn-tcp-test" class="btn-ghost" type="button">Tes koneksi</button>
+        </div>
+        <div id="tcp-status" class="status-line" role="status" aria-live="polite">HP dan printer harus di jaringan WiFi yang sama.</div>
+      </div>
+
+      <div class="ptype-panel" id="panel-system" hidden>
+        <p class="card-text">Struk dibuka di layar cetak bawaan perangkat. Cocok untuk printer yang punya driver atau dukungan AirPrint.</p>
+        <div class="row-inline">
+          <button id="btn-print-test" class="btn-ghost" type="button">Cetak struk uji</button>
+          <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
+        </div>
+      </div>
+
+      <div class="row-inline" style="margin-top:14px">
+        <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
+      </div>
+      <div id="printer-note" class="save-note" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="card-block">
+      <h2 class="card-title">Bagikan struk</h2>
+      <p class="card-text">Kalau printer belum tersambung, kirim struk ke aplikasi printer merek.</p>
       <div class="row-inline">
-        <button id="btn-share-test" class="btn-primary btn-inline" type="button">Bagikan struk uji</button>
-        <button id="btn-copy-test" class="btn-ghost" type="button">Salin struk uji</button>
-        <button id="btn-download-test" class="btn-ghost" type="button">Unduh struk (.txt)</button>
+        <button id="btn-share-test" class="btn-ghost" type="button">Bagikan</button>
+        <button id="btn-copy-test" class="btn-ghost" type="button">Salin</button>
+        <button id="btn-download-test" class="btn-ghost" type="button">Unduh .txt</button>
       </div>
       <div id="share-status" class="status-line" role="status" aria-live="polite">Belum ada yang dibagikan.</div>
     </div>
 
-    <div class="card-block" id="block-mobile">
-      <h2 class="card-title">Cetak lewat layar cetak perangkat <span class="tag-ok">cadangan</span></h2>
-      <p class="card-text" id="mobile-help">
-        Cocok kalau printer terdeteksi oleh layanan cetak bawaan perangkat (AirPrint di iPhone, atau printer jaringan di Android/Windows).
-      </p>
-      <div class="bridge-steps" id="mobile-steps">
-        <div class="step"><span class="step-n">1</span> Tekan <strong>Cetak struk</strong> di bawah (atau setelah pembayaran).</div>
-        <div class="step"><span class="step-n">2</span> Muncul layar cetak bawaan perangkat - pilih printer 58&nbsp;mm kamu.</div>
-        <div class="step"><span class="step-n">3</span> Kalau printer tidak muncul, itu berarti layanan cetak perangkat tidak mendukung printer tersebut - pakai jalur Bluetooth di atas.</div>
-        <div class="step"><span class="step-n">4</span> Di layar cetak, pilih ukuran kertas 58&nbsp;mm dan margin <em>None</em> agar struk tidak terpotong.</div>
-      </div>
-      <div class="row-inline">
-        <button id="btn-print-test" class="btn-ghost" type="button">Cetak struk uji</button>
-        <button id="btn-print-example" class="btn-ghost" type="button">Pratinjau struk</button>
-      </div>
-      <p class="card-text" style="margin:12px 0 0;font-size:13px;">
-        Struk juga bisa disimpan jadi PDF lewat pilihan <em>Save as PDF</em> di layar cetak.
-      </p>
-    </div>
-
-    <div class="card-block" id="block-bridge">
-      <h2 class="card-title">Mode cetak langsung (opsional, khusus komputer)</h2>
-      <p class="card-text">
-        Fitur ini hanya bisa dipakai kalau MoodA dibuka di <strong>komputer</strong> yang satu WiFi dengan printer, dan ada <strong>bridge</strong> kecil yang dijalankan di komputer itu. Di HP fitur ini tidak tersedia.
-      </p>
-      <div class="bridge-steps">
-        <div class="step"><span class="step-n">1</span> Di komputer: jalankan <code>node bridge.js</code>, biarkan jendelanya terbuka.</div>
-        <div class="step"><span class="step-n">2</span> Bridge mencari printer otomatis, atau isi IP printer di bawah.</div>
-        <div class="step"><span class="step-n">3</span> Klik <em>Tes koneksi</em>. Kalau hijau, cetak langsung tanpa dialog.</div>
-      </div>
-
-      <label class="field">
-        <span class="field-label">Alamat bridge</span>
-        <input id="bridge-url" type="text" placeholder="http://127.0.0.1:9110">
-      </label>
-
-      <label class="field">
-        <span class="field-label">IP printer <em>(opsional, temukan otomatis)</em></span>
-        <input id="printer-ip" type="text" placeholder="192.168.1.50">
-      </label>
-
-      <div class="row-inline">
-        <button id="btn-bridge-scan" class="btn-ghost" type="button">Cari printer</button>
-        <button id="btn-bridge-test" class="btn-primary btn-inline" type="button">Tes koneksi</button>
-      </div>
-      <div id="bridge-status" class="status-line" role="status" aria-live="polite">Bridge belum dicek.</div>
-    </div>
-
     <div class="card-block">
-      <h2 class="card-title">Struk</h2>
+      <h2 class="card-title">Detail struk</h2>
       <label class="field">
         <span class="field-label">Nama di struk</span>
         <input id="receipt-name" type="text" maxlength="32" placeholder="MoodA">
@@ -1197,14 +1239,6 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
           <option value="80">80 mm - 48 karakter</option>
         </select>
       </label>
-      <label class="check" id="check-bridge">
-        <input id="use-bridge" type="checkbox">
-        <span>Pakai bridge WiFi (lewati dialog cetak) - hanya di komputer</span>
-      </label>
-      <div class="row-inline">
-        <button id="btn-save-printer" class="btn-primary btn-inline" type="button">Simpan pengaturan</button>
-      </div>
-      <div id="printer-note" class="save-note" role="status" aria-live="polite"></div>
     </div>
   </section>
 </main>
@@ -1322,9 +1356,12 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
     receiptTagline: 'Es Teh - Milk Tea - Cemilan',
     receiptFooter: 'Terima kasih sudah mampir!',
     autoPrint: false,
-    useBridge: false,
+    printerType: 'bluetooth',
+    printerPort: '9100',
     bridgeUrl: 'http://127.0.0.1:9110',
     printerIp: '',
+    btAddress: '',
+    btName: '',
     paperWidth: '58'
   };
 
@@ -1413,29 +1450,15 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   }
 
   function applyDeviceUi() {
-    const kind = deviceKind();
-    const bridgeBlock = $('#block-bridge');
-    const checkBridge = $('#check-bridge');
+    const hasPlugin = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MoodaPrinter);
+    // Bluetooth hanya bisa lewat aplikasi Android.
+    const segBt = $('#printer-type .seg-btn[data-type="bluetooth"]');
+    if (segBt) segBt.hidden = !isMobile;
 
-    if (isMobile) {
-      // Sembunyikan jalur bridge sepenuhnya di HP; jangan pernah menyuruh buka komputer.
-      if (bridgeBlock) bridgeBlock.hidden = true;
-      if (checkBridge) checkBridge.hidden = true;
-      state.settings.useBridge = false;
-
-      const help = $('#mobile-help');
-      if (help) {
-        help.textContent = kind === 'iphone' || kind === 'ipad'
-          ? 'iPhone/iPad mencetak lewat AirPrint. Printer thermal harus mendukung AirPrint, atau pakai aplikasi merek printer yang menyediakan tombol cetak.'
-          : 'Android mencetak lewat layanan cetak bawaan. Untuk printer thermal biasanya perlu aplikasi merek printer (Xprinter / iDPRT) atau RawBT yang menerima perintah cetak.';
-      }
-    } else {
-      if (bridgeBlock) bridgeBlock.hidden = false;
-      if (checkBridge) checkBridge.hidden = false;
-    }
-
-    const btBlock = $('#block-bluetooth');
-    if (btBlock) btBlock.hidden = !isMobile;
+    let type = state.settings.printerType || 'bluetooth';
+    if (!isMobile && type === 'bluetooth') type = 'wifi';
+    if (isMobile && !hasPlugin && type === 'bluetooth') type = 'system';
+    applyPrinterType(type);
   }
 
   // ---------- Toast ----------
@@ -2088,12 +2111,80 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
     };
   }
 
-  async function printOrder(order) {
-    if (state.settings.useBridge && !isMobile) {
-      const ok = await sendToBridge(order);
-      if (ok) { markPrinted(order); return; }
-      toast('Cetak langsung gagal, memakai dialog cetak');
+  // ---------- Cetak langsung ke printer Bluetooth (khusus APK Android) ----------
+  const nativePrinter = () =>
+    (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MoodaPrinter) || null;
+
+  function toBase64(bytes) {
+    let s = '';
+    for (let i = 0; i < bytes.length; i += 1) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+
+  // Byte ESC/POS: baris pertama jadi judul tengah + huruf dobel, sisanya rata kiri.
+  function escposPayload(order) {
+    const ESC = 0x1b;
+    const GS = 0x1d;
+    const out = [ESC, 0x40];
+    const put = (txt) => { for (const ch of txt) out.push(ch.charCodeAt(0) & 0x7f); };
+    escposText(order).split('\n').forEach((raw, i) => {
+      const line = raw.replace(/[^\x20-\x7E\u00A0-\u024F]/g, ' ');
+      if (i === 0) {
+        out.push(ESC, 0x61, 0x01, ESC, 0x45, 0x01, GS, 0x21, 0x11);
+        put(line);
+        out.push(0x0a, GS, 0x21, 0x00, ESC, 0x45, 0x00);
+        return;
+      }
+      out.push(ESC, 0x61, 0x00);
+      put(line);
+      out.push(0x0a);
+    });
+    out.push(0x0a, 0x0a, 0x0a, GS, 0x56, 0x01);
+    return new Uint8Array(out);
+  }
+
+  async function printBluetooth(order) {
+    const plugin = nativePrinter();
+    if (!plugin) return false;
+    const address = state.settings.btAddress;
+    if (!address) {
+      toast('Pilih printer Bluetooth dulu di tab Printer');
+      return false;
     }
+    try {
+      await plugin.print({ address, data: toBase64(escposPayload(order)) });
+      toast('Struk terkirim ke printer');
+      return true;
+    } catch (err) {
+      toast('Gagal cetak: ' + ((err && err.message) || err));
+      return false;
+    }
+  }
+
+  async function printWifi(order) {
+    const host = (state.settings.printerIp || '').trim();
+    const port = Number(state.settings.printerPort) || 9100;
+    if (!host) { toast('Isi IP printer dulu di tab Printer'); return false; }
+    const plugin = nativePrinter();
+    if (plugin && plugin.printTcp) {
+      try {
+        await plugin.printTcp({ host, port, data: toBase64(escposPayload(order)) });
+        toast('Struk terkirim ke printer');
+        return true;
+      } catch (err) {
+        toast('Gagal cetak: ' + ((err && err.message) || err));
+        return false;
+      }
+    }
+    if (!isMobile) return sendToBridge(order);
+    toast('Cetak WiFi butuh aplikasi Android MoodA');
+    return false;
+  }
+
+  async function printOrder(order) {
+    const type = state.settings.printerType || 'bluetooth';
+    if (type === 'bluetooth' && await printBluetooth(order)) { markPrinted(order); return; }
+    if (type === 'wifi' && await printWifi(order)) { markPrinted(order); return; }
     const area = $('#print-area');
     area.textContent = '';
     area.append(renderReceiptNode(order));
@@ -2231,7 +2322,8 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: receiptPlainText(order),
-          ip: $('#printer-ip')?.value || state.settings.printerIp || '',
+          ip: state.settings.printerIp || '',
+          port: Number(state.settings.printerPort) || 9100,
           width: Number(state.settings.paperWidth || 58)
         }),
         signal: AbortSignal.timeout(8000)
@@ -2246,51 +2338,45 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
     }
   }
 
-  async function scanBridge() {
-    const st = $('#bridge-status');
-    st.className = 'status-line';
-    st.textContent = 'Menghubungi bridge...';
-    try {
-      const info = await bridgeHealth();
-      st.className = 'status-line is-ok';
-      st.textContent = info.printerIp
-        ? `Bridge OK * printer terdeteksi: ${info.printerIp}`
-        : 'Bridge aktif, printer belum diketahui';
-      if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
-    } catch (err) {
-      st.className = 'status-line is-err';
-      st.textContent = isMobile
-        ? 'Cetak langsung tidak tersedia di HP. Pakai dialog cetak bawaan perangkat.'
-        : 'Bridge tidak terjangkau. Di komputer ini, jalankan "node bridge.js" lalu coba lagi.';
-    }
-  }
+  async function testPrinter() {
+    const st = $('#tcp-status');
+    if (!st) return;
+    const host = ($('#printer-ip').value || '').trim();
+    const port = Number($('#printer-port').value) || 9100;
+    const show = (msg, cls) => {
+      st.className = 'status-line' + (cls ? ' is-' + cls : '');
+      st.textContent = msg;
+    };
+    if (!host) { show('Isi alamat IP printer dulu.', 'err'); return; }
 
-  async function testBridge() {
-    const st = $('#bridge-status');
-    st.className = 'status-line';
-    st.textContent = 'Menguji koneksi printer...';
-    const ip = $('#printer-ip').value.trim();
-    try {
-      const base = ($('#bridge-url').value.trim() || 'http://127.0.0.1:9110').replace(/\/$/, '');
-      const res = await fetch(base + '/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip }),
-        signal: AbortSignal.timeout(8000)
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'gagal');
-      st.className = 'status-line is-ok';
-      if (data.printerIp) {
-        $('#printer-ip').value = data.printerIp;
-        st.textContent = `Terhubung ke printer ${data.printerIp} * port ${data.port || 9100}`;
-      } else {
-        st.textContent = 'Bridge aktif. Isi IP printer kalau pencarian otomatis tidak menemukan.';
+    const plugin = nativePrinter();
+    if (plugin && plugin.testTcp) {
+      show('Menghubungi printer...', '');
+      try {
+        await plugin.testTcp({ host, port });
+        show('Terhubung ke ' + host + ':' + port + '.', 'ok');
+      } catch (err) {
+        show('Gagal: ' + ((err && err.message) || err), 'err');
       }
-    } catch (err) {
-      st.className = 'status-line is-err';
-      st.textContent = 'Koneksi ke printer gagal: ' + (err.message || err);
+      return;
     }
+
+    if (!isMobile) {
+      show('Menghubungi bridge...', '');
+      try {
+        const info = await bridgeHealth();
+        if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
+        show(
+          info.printerIp ? 'Bridge aktif, printer ' + info.printerIp + '.' : 'Bridge aktif, printer belum terdeteksi.',
+          info.printerIp ? 'ok' : ''
+        );
+      } catch (err) {
+        show('Bridge tidak terjangkau. Jalankan "node bridge.js" di komputer.', 'err');
+      }
+      return;
+    }
+
+    show('Tes koneksi tersedia di aplikasi Android.', 'err');
   }
 
   // ---------- Rekap ----------
@@ -2516,17 +2602,85 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   });
 
   // ---------- Printer settings ----------
+  const PRINTER_TYPES = {
+    bluetooth: 'Printer thermal 58/80 mm lewat Bluetooth. Khusus aplikasi Android MoodA.',
+    wifi: 'Printer jaringan yang punya alamat IP, mis. Brother, Epson TM, atau Xprinter LAN. Port raw umumnya 9100.',
+    system: 'Pakai layar cetak bawaan perangkat. Tidak perlu pengaturan tambahan.'
+  };
+
+  function applyPrinterType(type) {
+    const panels = { bluetooth: '#panel-bluetooth', wifi: '#panel-wifi', system: '#panel-system' };
+    Object.keys(panels).forEach((k) => {
+      const p = $(panels[k]);
+      if (p) p.hidden = k !== type;
+    });
+    document.querySelectorAll('#printer-type .seg-btn').forEach((b) => {
+      const on = b.dataset.type === type;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+    const help = $('#type-help');
+    if (help) help.textContent = PRINTER_TYPES[type] || '';
+    state.settings.printerType = type;
+  }
+
   function renderPrinterSettings() {
     const s = state.settings;
     $('#receipt-name').value = s.receiptName;
     $('#receipt-footer').value = s.receiptFooter;
     $('#auto-print').checked = !!s.autoPrint;
-    $('#use-bridge').checked = !!(s.useBridge && !isMobile);
-    $('#bridge-url').value = s.bridgeUrl;
-    $('#printer-ip').value = s.printerIp;
+    $('#printer-ip').value = s.printerIp || '';
+    $('#printer-port').value = s.printerPort || '9100';
     $('#paper-width').value = s.paperWidth || '58';
     $('#printer-note').textContent = '';
+    renderBtDevices();
     applyDeviceUi();
+  }
+
+  function renderBtDevices() {
+    const sel = $('#bt-device');
+    if (!sel) return;
+    sel.textContent = '';
+    const empty = el('option', null, '- pilih printer -');
+    empty.value = '';
+    sel.append(empty);
+    if (state.settings.btAddress) {
+      const saved = el('option', null, `${state.settings.btName || 'Printer'} (${state.settings.btAddress})`);
+      saved.value = state.settings.btAddress;
+      sel.append(saved);
+      sel.value = state.settings.btAddress;
+    }
+  }
+
+  async function scanBtDevices() {
+    const plugin = nativePrinter();
+    const status = $('#bt-status');
+    if (!status) return;
+    if (!plugin) {
+      status.textContent = 'Pencarian printer hanya tersedia di aplikasi Android. Di browser, pakai Bagikan / Salin struk.';
+      return;
+    }
+    status.textContent = 'Mencari printer...';
+    try {
+      const { devices } = await plugin.devices();
+      const sel = $('#bt-device');
+      sel.textContent = '';
+      const empty = el('option', null, '- pilih printer -');
+      empty.value = '';
+      sel.append(empty);
+      (devices || []).forEach((d) => {
+        const o = el('option', null, `${d.name} (${d.address})`);
+        o.value = d.address;
+        sel.append(o);
+      });
+      if (state.settings.btAddress) sel.value = state.settings.btAddress;
+      status.textContent = (devices || []).length
+        ? `${devices.length} printer terpasang. Pilih satu lalu Simpan pengaturan.`
+        : 'Belum ada printer terpasang. Pasangkan dulu di Setelan Bluetooth Android.';
+    } catch (err) {
+      status.textContent = 'Gagal mencari printer: ' + ((err && err.message) || err);
+    }
   }
 
   $('#btn-save-printer').addEventListener('click', () => {
@@ -2535,9 +2689,13 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
       receiptName: $('#receipt-name').value.trim() || 'MoodA',
       receiptFooter: $('#receipt-footer').value.trim(),
       autoPrint: $('#auto-print').checked,
-      useBridge: isMobile ? false : $('#use-bridge').checked,
-      bridgeUrl: $('#bridge-url').value.trim() || DEFAULT_SETTINGS.bridgeUrl,
+      printerType: state.settings.printerType || 'bluetooth',
+      printerPort: $('#printer-port').value || '9100',
       printerIp: $('#printer-ip').value.trim(),
+      btAddress: $('#bt-device') ? $('#bt-device').value : '',
+      btName: $('#bt-device') && $('#bt-device').selectedOptions[0]
+        ? $('#bt-device').selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/, '').trim()
+        : '',
       paperWidth: $('#paper-width').value
     };
     if (save()) {
@@ -2546,8 +2704,11 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
     }
   });
 
-  $('#btn-bridge-scan').addEventListener('click', scanBridge);
-  $('#btn-bridge-test').addEventListener('click', testBridge);
+  document.querySelectorAll('#printer-type .seg-btn').forEach((b) => {
+    b.addEventListener('click', () => applyPrinterType(b.dataset.type));
+  });
+  $('#btn-tcp-test').addEventListener('click', testPrinter);
+  if ($('#btn-bt-scan')) $('#btn-bt-scan').addEventListener('click', scanBtDevices);
 
   const SAMPLE_ORDER = () => ({
     id: 'TRX-TEST',

@@ -926,3 +926,46 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
   font-variant-numeric: tabular-nums;
 }
 .lock-note { font-size: 11.5px; color: var(--ink-soft); margin: 14px 0 0; line-height: 1.5; }
+
+/* ---- Segmented control: tipe printer ---- */
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
+  padding: 5px;
+  background: var(--line-soft);
+  border-radius: var(--radius-sm);
+}
+.seg-btn {
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.seg-btn:hover { color: var(--ink); }
+.seg-btn.is-active {
+  background: var(--white);
+  color: var(--teal-dark);
+  box-shadow: 0 1px 2px rgba(31, 41, 51, .10);
+}
+.seg-btn:focus-visible {
+  outline: 2.5px solid var(--mango-hi);
+  outline-offset: 2px;
+}
+.seg-btn[hidden] { display: none; }
+.field-help {
+  margin: 9px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+.ptype-panel { padding-top: 4px; }
+.ptype-panel[hidden] { display: none; }

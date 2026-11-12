@@ -34,7 +34,8 @@
     receiptTagline: 'Es Teh - Milk Tea - Cemilan',
     receiptFooter: 'Terima kasih sudah mampir!',
     autoPrint: false,
-    useBridge: false,
+    printerType: 'bluetooth',
+    printerPort: '9100',
     bridgeUrl: 'http://127.0.0.1:9110',
     printerIp: '',
     btAddress: '',
@@ -127,29 +128,15 @@
   }
 
   function applyDeviceUi() {
-    const kind = deviceKind();
-    const bridgeBlock = $('#block-bridge');
-    const checkBridge = $('#check-bridge');
+    const hasPlugin = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MoodaPrinter);
+    // Bluetooth hanya bisa lewat aplikasi Android.
+    const segBt = $('#printer-type .seg-btn[data-type="bluetooth"]');
+    if (segBt) segBt.hidden = !isMobile;
 
-    if (isMobile) {
-      // Sembunyikan jalur bridge sepenuhnya di HP; jangan pernah menyuruh buka komputer.
-      if (bridgeBlock) bridgeBlock.hidden = true;
-      if (checkBridge) checkBridge.hidden = true;
-      state.settings.useBridge = false;
-
-      const help = $('#mobile-help');
-      if (help) {
-        help.textContent = kind === 'iphone' || kind === 'ipad'
-          ? 'iPhone/iPad mencetak lewat AirPrint. Printer thermal harus mendukung AirPrint, atau pakai aplikasi merek printer yang menyediakan tombol cetak.'
-          : 'Android mencetak lewat layanan cetak bawaan. Untuk printer thermal biasanya perlu aplikasi merek printer (Xprinter / iDPRT) atau RawBT yang menerima perintah cetak.';
-      }
-    } else {
-      if (bridgeBlock) bridgeBlock.hidden = false;
-      if (checkBridge) checkBridge.hidden = false;
-    }
-
-    const btBlock = $('#block-bluetooth');
-    if (btBlock) btBlock.hidden = !isMobile;
+    let type = state.settings.printerType || 'bluetooth';
+    if (!isMobile && type === 'bluetooth') type = 'wifi';
+    if (isMobile && !hasPlugin && type === 'bluetooth') type = 'system';
+    applyPrinterType(type);
   }
 
   // ---------- Toast ----------
@@ -852,13 +839,30 @@
     }
   }
 
-  async function printOrder(order) {
-    if (await printBluetooth(order)) { markPrinted(order); return; }
-    if (state.settings.useBridge && !isMobile) {
-      const ok = await sendToBridge(order);
-      if (ok) { markPrinted(order); return; }
-      toast('Cetak langsung gagal, memakai dialog cetak');
+  async function printWifi(order) {
+    const host = (state.settings.printerIp || '').trim();
+    const port = Number(state.settings.printerPort) || 9100;
+    if (!host) { toast('Isi IP printer dulu di tab Printer'); return false; }
+    const plugin = nativePrinter();
+    if (plugin && plugin.printTcp) {
+      try {
+        await plugin.printTcp({ host, port, data: toBase64(escposPayload(order)) });
+        toast('Struk terkirim ke printer');
+        return true;
+      } catch (err) {
+        toast('Gagal cetak: ' + ((err && err.message) || err));
+        return false;
+      }
     }
+    if (!isMobile) return sendToBridge(order);
+    toast('Cetak WiFi butuh aplikasi Android MoodA');
+    return false;
+  }
+
+  async function printOrder(order) {
+    const type = state.settings.printerType || 'bluetooth';
+    if (type === 'bluetooth' && await printBluetooth(order)) { markPrinted(order); return; }
+    if (type === 'wifi' && await printWifi(order)) { markPrinted(order); return; }
     const area = $('#print-area');
     area.textContent = '';
     area.append(renderReceiptNode(order));
@@ -996,7 +1000,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: receiptPlainText(order),
-          ip: $('#printer-ip')?.value || state.settings.printerIp || '',
+          ip: state.settings.printerIp || '',
+          port: Number(state.settings.printerPort) || 9100,
           width: Number(state.settings.paperWidth || 58)
         }),
         signal: AbortSignal.timeout(8000)
@@ -1011,51 +1016,45 @@
     }
   }
 
-  async function scanBridge() {
-    const st = $('#bridge-status');
-    st.className = 'status-line';
-    st.textContent = 'Menghubungi bridge...';
-    try {
-      const info = await bridgeHealth();
-      st.className = 'status-line is-ok';
-      st.textContent = info.printerIp
-        ? `Bridge OK * printer terdeteksi: ${info.printerIp}`
-        : 'Bridge aktif, printer belum diketahui';
-      if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
-    } catch (err) {
-      st.className = 'status-line is-err';
-      st.textContent = isMobile
-        ? 'Cetak langsung tidak tersedia di HP. Pakai dialog cetak bawaan perangkat.'
-        : 'Bridge tidak terjangkau. Di komputer ini, jalankan "node bridge.js" lalu coba lagi.';
-    }
-  }
+  async function testPrinter() {
+    const st = $('#tcp-status');
+    if (!st) return;
+    const host = ($('#printer-ip').value || '').trim();
+    const port = Number($('#printer-port').value) || 9100;
+    const show = (msg, cls) => {
+      st.className = 'status-line' + (cls ? ' is-' + cls : '');
+      st.textContent = msg;
+    };
+    if (!host) { show('Isi alamat IP printer dulu.', 'err'); return; }
 
-  async function testBridge() {
-    const st = $('#bridge-status');
-    st.className = 'status-line';
-    st.textContent = 'Menguji koneksi printer...';
-    const ip = $('#printer-ip').value.trim();
-    try {
-      const base = ($('#bridge-url').value.trim() || 'http://127.0.0.1:9110').replace(/\/$/, '');
-      const res = await fetch(base + '/test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip }),
-        signal: AbortSignal.timeout(8000)
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || 'gagal');
-      st.className = 'status-line is-ok';
-      if (data.printerIp) {
-        $('#printer-ip').value = data.printerIp;
-        st.textContent = `Terhubung ke printer ${data.printerIp} * port ${data.port || 9100}`;
-      } else {
-        st.textContent = 'Bridge aktif. Isi IP printer kalau pencarian otomatis tidak menemukan.';
+    const plugin = nativePrinter();
+    if (plugin && plugin.testTcp) {
+      show('Menghubungi printer...', '');
+      try {
+        await plugin.testTcp({ host, port });
+        show('Terhubung ke ' + host + ':' + port + '.', 'ok');
+      } catch (err) {
+        show('Gagal: ' + ((err && err.message) || err), 'err');
       }
-    } catch (err) {
-      st.className = 'status-line is-err';
-      st.textContent = 'Koneksi ke printer gagal: ' + (err.message || err);
+      return;
     }
+
+    if (!isMobile) {
+      show('Menghubungi bridge...', '');
+      try {
+        const info = await bridgeHealth();
+        if (info.printerIp && !$('#printer-ip').value) $('#printer-ip').value = info.printerIp;
+        show(
+          info.printerIp ? 'Bridge aktif, printer ' + info.printerIp + '.' : 'Bridge aktif, printer belum terdeteksi.',
+          info.printerIp ? 'ok' : ''
+        );
+      } catch (err) {
+        show('Bridge tidak terjangkau. Jalankan "node bridge.js" di komputer.', 'err');
+      }
+      return;
+    }
+
+    show('Tes koneksi tersedia di aplikasi Android.', 'err');
   }
 
   // ---------- Rekap ----------
@@ -1281,14 +1280,36 @@
   });
 
   // ---------- Printer settings ----------
+  const PRINTER_TYPES = {
+    bluetooth: 'Printer thermal 58/80 mm lewat Bluetooth. Khusus aplikasi Android MoodA.',
+    wifi: 'Printer jaringan yang punya alamat IP, mis. Brother, Epson TM, atau Xprinter LAN. Port raw umumnya 9100.',
+    system: 'Pakai layar cetak bawaan perangkat. Tidak perlu pengaturan tambahan.'
+  };
+
+  function applyPrinterType(type) {
+    const panels = { bluetooth: '#panel-bluetooth', wifi: '#panel-wifi', system: '#panel-system' };
+    Object.keys(panels).forEach((k) => {
+      const p = $(panels[k]);
+      if (p) p.hidden = k !== type;
+    });
+    document.querySelectorAll('#printer-type .seg-btn').forEach((b) => {
+      const on = b.dataset.type === type;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
+    const help = $('#type-help');
+    if (help) help.textContent = PRINTER_TYPES[type] || '';
+    state.settings.printerType = type;
+  }
+
   function renderPrinterSettings() {
     const s = state.settings;
     $('#receipt-name').value = s.receiptName;
     $('#receipt-footer').value = s.receiptFooter;
     $('#auto-print').checked = !!s.autoPrint;
-    $('#use-bridge').checked = !!(s.useBridge && !isMobile);
-    $('#bridge-url').value = s.bridgeUrl;
-    $('#printer-ip').value = s.printerIp;
+    $('#printer-ip').value = s.printerIp || '';
+    $('#printer-port').value = s.printerPort || '9100';
     $('#paper-width').value = s.paperWidth || '58';
     $('#printer-note').textContent = '';
     renderBtDevices();
@@ -1346,8 +1367,8 @@
       receiptName: $('#receipt-name').value.trim() || 'MoodA',
       receiptFooter: $('#receipt-footer').value.trim(),
       autoPrint: $('#auto-print').checked,
-      useBridge: isMobile ? false : $('#use-bridge').checked,
-      bridgeUrl: $('#bridge-url').value.trim() || DEFAULT_SETTINGS.bridgeUrl,
+      printerType: state.settings.printerType || 'bluetooth',
+      printerPort: $('#printer-port').value || '9100',
       printerIp: $('#printer-ip').value.trim(),
       btAddress: $('#bt-device') ? $('#bt-device').value : '',
       btName: $('#bt-device') && $('#bt-device').selectedOptions[0]
@@ -1361,8 +1382,10 @@
     }
   });
 
-  $('#btn-bridge-scan').addEventListener('click', scanBridge);
-  $('#btn-bridge-test').addEventListener('click', testBridge);
+  document.querySelectorAll('#printer-type .seg-btn').forEach((b) => {
+    b.addEventListener('click', () => applyPrinterType(b.dataset.type));
+  });
+  $('#btn-tcp-test').addEventListener('click', testPrinter);
   if ($('#btn-bt-scan')) $('#btn-bt-scan').addEventListener('click', scanBtDevices);
 
   const SAMPLE_ORDER = () => ({
