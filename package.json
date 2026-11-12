@@ -7,9 +7,15 @@
     "start": "npx serve .",
     "bridge": "node bridge.js",
     "test": "node _test_cdp.js",
-    "cap:init": "npx cap init MoodA com.mooda.kasir --web-dir=.",
-    "cap:add:android": "npx cap add android",
-    "cap:add:ios": "npx cap add ios",
-    "cap:sync": "npx cap sync"
+    "build:www": "node build-www.js",
+    "build:single": "node build-single.js",
+    "cap:add:android": "npm run build:www && npx cap add android",
+    "cap:add:ios": "npm run build:www && npx cap add ios",
+    "cap:sync": "npm run build:www && npx cap sync"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
   }
 }

@@ -1,0 +1,11 @@
+{
+  "appId": "com.mooda.kasir",
+  "appName": "MoodA",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
