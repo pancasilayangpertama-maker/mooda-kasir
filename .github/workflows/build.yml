@@ -50,8 +50,8 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Terima lisensi Android SDK
+        run: yes | sdkmanager --licenses > /dev/null || true
 
       - name: Install Android SDK 36
         run: sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
