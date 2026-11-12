@@ -673,8 +673,13 @@
     };
     box.append(rule('*'));
 
-    // nomor besar
-    box.append(el('div', 'r-nomor', meta.nomor));
+    // Nama pelanggan jadi penanda utama struk (bukan nomor pesanan).
+    const nama = (order.customer || '').trim();
+    if (nama) {
+      box.append(el('div', 'r-nama', nama));
+    } else {
+      box.append(el('div', 'r-nama r-nama-kosong', 'Tanpa nama'));
+    }
 
     // meta
     const metaBox = el('div', 'r-meta');
@@ -685,7 +690,7 @@
       return row;
     };
     metaBox.append(metaRow(meta.tanggal, meta.jam));
-    if (order.customer) metaBox.append(metaRow('Atas nama', order.customer));
+    metaBox.append(metaRow('No. pesanan', meta.nomor));
     box.append(metaBox);
 
     box.append(rule('*'));
@@ -756,9 +761,9 @@
     out.push(fit(trunc((s.receiptName || 'MoodA').toUpperCase(), cols)));
     if (s.receiptTagline) out.push(fit(trunc(s.receiptTagline, cols)));
     out.push(line('-'));
-    out.push(kv('No', meta.nomor));
+    if ((order.customer || '').trim()) out.push(fit(trunc('Nama: ' + order.customer, cols)));
     out.push(kv(meta.tanggal, meta.jam));
-    if (order.customer) out.push(fit(kv('Nama', trunc(order.customer, cols - 6))));
+    out.push(kv('No', meta.nomor));
     out.push(line('-'));
     order.lines.forEach(l => {
       const price = rupiah(l.subtotal);
@@ -833,9 +838,9 @@
     out.push(fit(trunc((s.receiptName || 'MoodA').toUpperCase(), cols)));
     if (s.receiptTagline) out.push(fit(trunc(s.receiptTagline, cols)));
     out.push(line());
-    out.push(kv('No', meta.nomor));
+    if ((order.customer || '').trim()) out.push(fit(trunc('Nama: ' + order.customer, cols)));
     out.push(kv(meta.tanggal, meta.jam));
-    if (order.customer) out.push(kv('Nama', trunc(order.customer, cols - 6)));
+    out.push(kv('No', meta.nomor));
     out.push(line());
     order.lines.forEach(l => {
       const price = rupiah(l.subtotal);

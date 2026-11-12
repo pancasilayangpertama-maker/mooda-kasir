@@ -100,7 +100,7 @@ class CDP {
         minus: minus ? minus.textContent : '',
         minusCode: minus ? minus.textContent.codePointAt(0) : 0,
         qty: qtyVal ? qtyVal.textContent : '',
-        hasMojibake: /Ã|â€|Â/.test(txt)
+        hasMojibake: new RegExp('[\\u00c2\\u00c3\\u00e2\\u20ac]').test(txt)
       };
     `);
     log(cartChars.minusCode === 0x2212, 'Tombol minus pakai U+2212 (bukan mojibake)',
@@ -258,6 +258,42 @@ class CDP {
     `);
     log(!cred.hit, 'Tidak ada API key/secret di halaman', JSON.stringify(cred));
 
+    // ---------- 7. Struk: nama pelanggan jadi penanda utama ----------
+    await cdp.eval(`document.querySelector('.tab[data-view="kasir"]').click(); return true;`);
+    await new Promise((r) => setTimeout(r, 250));
+    await cdp.eval(`
+      const card = [...document.querySelectorAll('#menu-grid .menu-card')][0];
+      card.click();
+      document.getElementById('btn-checkout').click();
+      return true;
+    `);
+    await new Promise((r) => setTimeout(r, 350));
+    await cdp.eval(`
+      document.getElementById('pay-name').value = 'dono';
+      const m = [...document.querySelectorAll('[data-cash]')].find(b => b.dataset.cash === 'exact');
+      if (m) m.click();
+      document.getElementById('btn-pay-confirm').click();
+      return true;
+    `);
+    await new Promise((r) => setTimeout(r, 500));
+
+    const receipt = await cdp.eval(`
+      document.querySelector('.tab[data-view="printer"]').click();
+      document.getElementById('btn-print-example').click();
+      const r = document.querySelector('#print-area .receipt');
+      const out = {
+        nama: r ? ((r.querySelector('.r-nama') || {}).textContent || '') : '',
+        adaNomorBesar: !!(r && r.querySelector('.r-nomor')),
+        metaRows: r ? [...r.querySelectorAll('.r-meta-row')].map(x => x.textContent) : []
+      };
+      document.getElementById('print-area').click();
+      return out;
+    `);
+    log((receipt.nama || '').toLowerCase() === 'dono', 'Struk: nama pelanggan tampil besar', receipt.nama);
+    log(!receipt.adaNomorBesar, 'Struk: nomor besar sudah dihapus', String(receipt.adaNomorBesar));
+    log(receipt.metaRows.some((t) => /No\. pesanan/i.test(t)), 'Struk: nomor pindah ke baris kecil',
+      receipt.metaRows.join(' || ').slice(0, 90));
+
     fs.writeFileSync(path.join(process.env.TEMP, 'opencode', 'revision-test.json'), JSON.stringify(results, null, 2));
   } catch (err) {
     console.error('FATAL', (err && err.stack) || err);
@@ -270,3 +306,4 @@ class CDP {
     if (failed > 0) process.exitCode = 1;
   }
 })();
+

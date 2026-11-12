@@ -720,14 +720,17 @@ h2 { font-size: 17px; font-weight: 800; margin: 0; }
 .r-meta { display: grid; gap: .8mm; }
 .r-meta-row { display: flex; justify-content: space-between; gap: 3mm; font-size: 10px; }
 .r-meta-row b { font-weight: 700; }
-.r-nomor {
+.r-nama {
   text-align: center;
   font-family: 'Baloo 2', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
-  letter-spacing: 1.6px;
-  padding: 1mm 0;
+  letter-spacing: .3px;
+  line-height: 1.2;
+  padding: 1.2mm 0 .6mm;
+  word-break: break-word;
 }
+.r-nama-kosong { opacity: .5; font-size: 12px; font-style: italic; }
 
 /* daftar item */
 .r-items { display: grid; gap: 1.6mm; }
